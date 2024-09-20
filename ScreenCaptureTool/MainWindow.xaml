@@ -45,22 +45,33 @@
 
             <!-- デスクトップキャプチャボタン -->
             <Button Content="デスクトップキャプチャ" Width="150" Height="50" Click="CaptureDesktopButton_Click" />
+
+            <StackPanel Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- サムネイルサイズ選択 -->
+                <TextBlock Text="サムネイルサイズ" Margin="0,0,0,10" />
+                <ComboBox x:Name="ThumbnailSizeComboBox" Width="150" SelectionChanged="ThumbnailSizeComboBox_SelectionChanged">
+                    <ComboBoxItem Content="特大" Tag="500" />
+                    <ComboBoxItem Content="大" Tag="300" />
+                    <ComboBoxItem Content="中" Tag="200" IsSelected="True" />
+                    <ComboBoxItem Content="小" Tag="100" />
+                </ComboBox>
+            </StackPanel>
         </StackPanel>
 
         <!-- 右側のサムネイル表示を行列で表示 -->
         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding ImageFiles}">
+            <ItemsControl x:Name="ThumbnailItemsControl" ItemsSource="{Binding ImageFiles}">
                 <ItemsControl.ItemsPanel>
                     <!-- 行列形式でアイテムを表示するUniformGrid -->
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="4" />
+                        <UniformGrid />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Vertical" Margin="10">
                             <!-- サムネイル画像 -->
-                            <Image Source="{Binding Thumbnail}" Width="100" Height="100" Stretch="Uniform" MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown">
+                            <Image Source="{Binding Thumbnail}"  Width="{Binding Path=ThumbnailWidth}" Height="{Binding Path=ThumbnailHeight}"  Stretch="Uniform" MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown">
                                 <Image.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="削除" Click="DeleteMenuItem_Click" />

@@ -1,19 +1,22 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO;
-using System.Windows;
-using System.Windows.Forms;
-using System.Windows.Media.Imaging;
-using System.Xml.Serialization;
-using System.Windows.Controls;
+using System.Drawing;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.ComponentModel;
+using System.Linq;
+using System.Xml.Serialization;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Microsoft.VisualBasic.FileIO;
 
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using MessageBox = System.Windows.MessageBox;
-using Microsoft.VisualBasic.FileIO;
-using System.Linq;
 
 namespace ScreenCaptureTool
 {
@@ -21,6 +24,9 @@ namespace ScreenCaptureTool
     {
         // 画像ファイルのリスト
         public ObservableCollection<ImageFile> ImageFiles { get; set; } = new ObservableCollection<ImageFile>();
+
+        // デフォルトのサムネイルサイズ
+        private int thumbnailSize = 200;
 
         // デフォルトのファイル名の配列
         private readonly List<string> defaultFileNames = new List<string>() {
@@ -35,6 +41,9 @@ namespace ScreenCaptureTool
         {
             InitializeComponent();
 
+            // ウィンドウのサイズ変更イベントにハンドラを追加
+            this.SizeChanged += Window_SizeChanged;
+
             // DataContextにImageFilesをバインド
             DataContext = this;
 
@@ -47,8 +56,73 @@ namespace ScreenCaptureTool
             // 初期の保存先フォルダを表示
             SelectedFolderPath.Text = "選択されたフォルダ: " + saveFolderPath;
 
+            // 起動時に列数を初期設定
+            AdjustThumbnailGridColumns();
+
             // 起動時に画像フォルダをチェック
             LoadImagesFromFolder();
+        }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            AdjustThumbnailGridColumns();
+        }
+
+        private void AdjustThumbnailGridColumns()
+        {
+            if (ThumbnailItemsControl == null)
+            {
+                return;
+            }
+
+            // サムネイル1つあたりの横幅と余白の合計
+            int thumbnailTotalWidth = thumbnailSize + 20;
+
+            // ウィンドウの幅に基づいて、表示可能な列数を計算
+            int columns = Math.Max(1, (int)Math.Floor(this.ActualWidth / thumbnailTotalWidth));
+
+            // ItemsControlからUniformGridを取得
+            UniformGrid? uniformGrid = FindVisualChild<UniformGrid>(ThumbnailItemsControl);
+
+            if (uniformGrid != null)
+            {
+                uniformGrid.Columns = columns;
+            }
+        }
+
+        // VisualTreeHelperを使って特定の型の子要素を取得する汎用メソッド
+        private T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+                else
+                {
+                    T? childOfChild = FindVisualChild<T>(child);
+                    if (childOfChild != null)
+                    {
+                        return childOfChild;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void ThumbnailSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ThumbnailSizeComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                // ComboBoxのTagからサイズを取得
+                thumbnailSize = int.Parse((string)selectedItem.Tag);
+                UpdateThumbnails();  // サイズ変更後にサムネイル更新
+
+                // サムネイルサイズが変更されたら列数を再調整
+                AdjustThumbnailGridColumns();
+            }
         }
 
         private void LoadSettings()
@@ -61,6 +135,10 @@ namespace ScreenCaptureTool
                     using (FileStream fs = new FileStream(SettingsFilePath, FileMode.Open))
                     {
                         AppSettings settings = (AppSettings)serializer.Deserialize(fs);
+                        if (settings.ThumbnailSize > 0)
+                        {
+                            thumbnailSize = settings.ThumbnailSize;
+                        }
                         saveFolderPath = settings.SaveFolderPath;
                         XInput.Text = settings.X.ToString();
                         YInput.Text = settings.Y.ToString();
@@ -98,7 +176,7 @@ namespace ScreenCaptureTool
             {
                 AppSettings settings = new AppSettings
                 {
-                    SaveFolderPath = saveFolderPath,
+                    ThumbnailSize = thumbnailSize,
                     X = int.TryParse(XInput.Text, out var x) ? x : 0,
                     Y = int.TryParse(YInput.Text, out var y) ? y : 0,
                     Width = int.TryParse(WidthInput.Text, out var width) ? width : 0,
@@ -275,6 +353,11 @@ namespace ScreenCaptureTool
             }
         }
 
+        /// <summary>
+        /// BitmapSourceからBitmapImageへの変換
+        /// </summary>
+        /// <param name="bitmapSource">BitmapSource</param>
+        /// <returns>変換後のBitmapImage</returns>
         private BitmapImage ConvertBitmapSourceToBitmapImage(BitmapSource bitmapSource)
         {
             // BitmapSourceをMemoryStreamに保存
@@ -295,34 +378,50 @@ namespace ScreenCaptureTool
             }
         }
 
+        /// <summary>
+        /// 指定されたファイルをBitmapImage形式で読み込む
+        /// </summary>
+        /// <param name="filePath">パス</param>
+        /// <returns>BitmapImage</returns>
+        private BitmapImage LoadBitmapImage(string filePath)
+        {
+            using (Stream stream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete
+            ))
+            {
+                // ロックしないように指定したstreamを使用する。
+                BitmapDecoder decoder = BitmapDecoder.Create(
+                    stream,
+                    BitmapCreateOptions.None, // この辺のオプションは適宜
+                    BitmapCacheOption.Default // これも
+                );
+                BitmapSource bmp = new WriteableBitmap(decoder.Frames[0]);
+                bmp.Freeze();
+
+                // BitmapImage形式に変換して返す
+                return ConvertBitmapSourceToBitmapImage(bmp);
+            }
+        }
+
         private void AddImageToList(string filePath)
         {
             try
             {
-                using (Stream stream = new FileStream(
-                    filePath,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete
-                ))
-                {
-                    // ロックしないように指定したstreamを使用する。
-                    BitmapDecoder decoder = BitmapDecoder.Create(
-                        stream,
-                        BitmapCreateOptions.None, // この辺のオプションは適宜
-                        BitmapCacheOption.Default // これも
-                    );
-                    BitmapSource bmp = new WriteableBitmap(decoder.Frames[0]);
-                    bmp.Freeze();
+                // サムネル画像を読み込む
+                BitmapImage thumbnail = LoadBitmapImage(filePath);
 
-                    // xamlでImageを記述 → imgSync
-                    // 画像ファイル情報をリストに追加
-                    ImageFiles.Add(new ImageFile
-                    {
-                        FileName = Path.GetFileName(filePath),
-                        Thumbnail = ConvertBitmapSourceToBitmapImage(bmp)
-                    });
-                }
+                // xamlでImageを記述 → imgSync
+                // 画像ファイル情報をリストに追加
+                ImageFiles.Add(new ImageFile
+                {
+                    FileName = Path.GetFileName(filePath),
+                    Thumbnail = thumbnail,
+                    ThumbnailWidth = thumbnailSize,
+                    ThumbnailHeight = thumbnailSize
+                });
             }
             catch (Exception ex)
             {
@@ -345,6 +444,16 @@ namespace ScreenCaptureTool
                     // 設定を保存
                     SaveSettings();
                 }
+            }
+        }
+
+        private void UpdateThumbnails()
+        {
+            foreach (var imageFile in ImageFiles)
+            {
+                // サムネイルの幅と高さを新しいサイズに合わせて更新
+                imageFile.ThumbnailWidth = thumbnailSize;
+                imageFile.ThumbnailHeight = thumbnailSize;
             }
         }
 
@@ -443,18 +552,56 @@ namespace ScreenCaptureTool
     }
 
     // 画像ファイル情報を保持するクラス
-    public class ImageFile
+    public class ImageFile : INotifyPropertyChanged
     {
         public string FileName { get; set; }
-        public string FilePath { get; set; }
         public BitmapImage Thumbnail { get; set; }
+        public string FilePath { get; set; }
+
+        private int thumbnailWidth;
+
+        public int ThumbnailWidth
+        {
+            get { return thumbnailWidth; }
+            set
+            {
+                if (thumbnailWidth != value)
+                {
+                    thumbnailWidth = value;
+                    OnPropertyChanged(nameof(ThumbnailWidth));
+                }
+            }
+        }
+
+        private int thumbnailHeight;
+
+        public int ThumbnailHeight
+        {
+            get { return thumbnailHeight; }
+            set
+            {
+                if (thumbnailHeight != value)
+                {
+                    thumbnailHeight = value;
+                    OnPropertyChanged(nameof(ThumbnailHeight));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     // 設定を保持するクラス
     [Serializable]
     public class AppSettings
     {
-        public string SaveFolderPath { get; set; }
+        public int ThumbnailSize { get; set; } = 200;  // デフォルトサイズ
+        public string SaveFolderPath { get; set; } = Environment.CurrentDirectory;
         public int X { get; set; }
         public int Y { get; set; }
         public int Width { get; set; }
