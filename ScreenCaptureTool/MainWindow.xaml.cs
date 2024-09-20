@@ -1,10 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Drawing;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
 using System.Windows;
@@ -42,7 +40,7 @@ namespace ScreenCaptureTool
         /// <summary>
         /// 保存先パス
         /// </summary>
-        private string saveFolderPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CapturedImages");
+        private string saveFolderPath = Path.Combine(Environment.CurrentDirectory, "CapturedImages");
 
         /// <summary>
         /// アプリケーション設定を保存する XML ファイル名
@@ -60,9 +58,6 @@ namespace ScreenCaptureTool
         {
             InitializeComponent();
 
-            // ウィンドウのサイズ変更イベントにハンドラを追加
-            this.SizeChanged += Window_SizeChanged;
-
             // DataContextにImageFilesをバインド
             DataContext = this;
 
@@ -72,11 +67,11 @@ namespace ScreenCaptureTool
             // 設定を読み込む
             LoadSettings();
 
-            // 起動時に列数を初期設定
-            AdjustThumbnailGridColumns();
+            // フォルダツリーの初期化
+            InitializeFolderTree();
 
-            // 起動時に画像フォルダをチェック
-            LoadImagesFromFolder();
+            // 保存先フォルダをツリーから選択状態にする
+            SelectFolderInTree(saveFolderPath);
         }
 
         #endregion Constructor
@@ -84,16 +79,6 @@ namespace ScreenCaptureTool
         #region Methods
 
         #region Events(Window)
-
-        /// <summary>
-        /// ウィンドウサイズが変更された
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            AdjustThumbnailGridColumns();
-        }
 
         /// <summary>
         /// ウィンドウが閉じられた：ウィンドウの位置とサイズを保存する
@@ -396,7 +381,7 @@ namespace ScreenCaptureTool
         #region Thumbnails
 
         /// <summary>
-        /// ウィンドウ幅に合うようにサムネイル一覧の列数を調整する
+        /// サムネイル一覧の列数を調整する
         /// </summary>
         private void AdjustThumbnailGridColumns()
         {
@@ -408,8 +393,11 @@ namespace ScreenCaptureTool
             // サムネイル1つあたりの横幅と余白の合計
             int thumbnailTotalWidth = thumbnailSize + 20;
 
-            // ウィンドウの幅に基づいて、表示可能な列数を計算
-            int columns = Math.Max(1, (int)Math.Floor(this.ActualWidth / thumbnailTotalWidth));
+            // サムネイル表示エリアの幅を取得
+            double thumbnailAreaWidth = ((ScrollViewer)ThumbnailItemsControl.Parent).ActualWidth;
+
+            // サムネイル表示エリアの幅に基づいて、表示可能な列数を計算
+            int columns = Math.Max(1, (int)Math.Floor(thumbnailAreaWidth / thumbnailTotalWidth));
 
             // ItemsControlからUniformGridを取得
             UniformGrid? uniformGrid = FindVisualChild<UniformGrid>(ThumbnailItemsControl);
@@ -567,6 +555,121 @@ namespace ScreenCaptureTool
 
         #endregion Thumbnails
 
+        #region FolderTree
+
+        // フォルダツリーを初期化する
+        private void InitializeFolderTree()
+        {
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (drive.IsReady)
+                {
+                    var item = new TreeViewItem { Header = drive.Name, Tag = drive.Name };
+                    item.Items.Add(null);  // ダミーアイテム
+                    item.Expanded += Folder_Expanded;
+                    FolderTreeView.Items.Add(item);
+                }
+            }
+        }
+
+        // フォルダを展開したときの処理
+        private void Folder_Expanded(object sender, RoutedEventArgs e)
+        {
+            var item = (TreeViewItem)sender;
+            if (item.Items.Count == 1 && item.Items[0] == null)  // ダミーアイテムの確認
+            {
+                item.Items.Clear();
+                try
+                {
+                    var directories = Directory.GetDirectories(item.Tag.ToString());
+                    foreach (var directory in directories)
+                    {
+                        var subItem = new TreeViewItem { Header = Path.GetFileName(directory), Tag = directory };
+                        subItem.Items.Add(null);  // ダミーアイテム
+                        subItem.Expanded += Folder_Expanded;
+                        item.Items.Add(subItem);
+                    }
+                }
+                catch (UnauthorizedAccessException) { }
+            }
+        }
+
+        // フォルダツリーで選択が変更されたとき
+        private void FolderTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            var selectedItem = FolderTreeView.SelectedItem as TreeViewItem;
+            if (selectedItem != null)
+            {
+                SelectCurrentFolder(selectedItem.Tag.ToString());
+            }
+        }
+
+        // saveFolderPathのフォルダをツリーで選択する
+        private void SelectFolderInTree(string saveFolderPath)
+        {
+            string[] pathParts = saveFolderPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            TreeViewItem currentItem = null;
+
+            foreach (TreeViewItem driveItem in FolderTreeView.Items)
+            {
+                if (driveItem.Tag.ToString() == pathParts[0] + Path.DirectorySeparatorChar) // ドライブ名の一致を確認
+                {
+                    currentItem = driveItem;
+                    currentItem.IsExpanded = true; // ドライブを展開
+                    break;
+                }
+            }
+
+            // ドライブが見つからない場合は終了
+            if (currentItem == null)
+                return;
+
+            // ドライブ以下のフォルダを順次展開していく
+            for (int i = 1; i < pathParts.Length; i++)
+            {
+                bool found = false;
+                foreach (TreeViewItem subItem in currentItem.Items)
+                {
+                    if (subItem.Header.ToString() == pathParts[i])
+                    {
+                        currentItem = subItem;
+                        currentItem.IsExpanded = true; // フォルダを展開
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    return; // 見つからなければ終了
+                }
+            }
+
+            currentItem.IsSelected = true; // 最後のフォルダを選択
+        }
+
+        /// <summary>
+        /// カレントフォルダの変更
+        /// </summary>
+        /// <param name="folderPath">パス</param>
+        private void SelectCurrentFolder(string folderPath)
+        {
+            // 保存先フォルダを変更
+            saveFolderPath = folderPath;
+
+            // UIに表示
+            SelectedFolderTextBox.Text = folderPath;
+
+            // 選択されたフォルダの一覧を表示
+            LoadImagesFromFolder();
+
+            // 設定を保存
+            SaveSettings();
+        }
+
+        #endregion FolderTree
+
         #endregion Private
 
         #region Events(Control)
@@ -582,14 +685,7 @@ namespace ScreenCaptureTool
             {
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    saveFolderPath = dialog.SelectedPath;
-                    SelectedFolderTextBox.Text = saveFolderPath;
-
-                    // 選択されたフォルダの一覧を表示
-                    LoadImagesFromFolder();
-
-                    // 設定を保存
-                    SaveSettings();
+                    SelectCurrentFolder(dialog.SelectedPath);
                 }
             }
         }
@@ -699,6 +795,16 @@ namespace ScreenCaptureTool
                     MessageBox.Show("ファイルの削除に失敗しました: " + ex.Message);
                 }
             }
+        }
+
+        /// <summary>
+        /// 下部ペイン：サイズ変更
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ImageGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            AdjustThumbnailGridColumns();
         }
 
         #endregion Events(Control)
