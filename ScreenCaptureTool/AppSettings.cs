@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -56,6 +57,11 @@ namespace ScreenCaptureTool
         /// サムネイル画像サイズ
         /// </summary>
         public int ThumbnailSize { get; set; } = 200;  // デフォルトサイズ
+
+        /// <summary>
+        /// 保存ファイル名の一覧
+        /// </summary>
+        public ObservableCollection<string> SaveFileNames = new ObservableCollection<string>();
 
         /// <summary>
         /// 画像保存先フォルダ

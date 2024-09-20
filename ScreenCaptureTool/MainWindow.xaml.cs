@@ -25,11 +25,9 @@ namespace ScreenCaptureTool
         #region Variable
 
         /// <summary>
-        /// デフォルトのファイル名の配列
+        /// ファイル名の配列
         /// </summary>
-        private readonly List<string> defaultFileNames = new List<string>() {
-            "フロー", "期待値1", "期待値2", "期待値3", "条件1", "条件2", "条件3"
-        };
+        private ObservableCollection<string> SaveFileNames = new ObservableCollection<string>();
 
         /// <summary>
         /// 画像ファイルのリスト
@@ -69,13 +67,10 @@ namespace ScreenCaptureTool
             DataContext = this;
 
             // ComboBox にファイル名リストを設定
-            FileNameComboBox.ItemsSource = defaultFileNames;
+            FileNameComboBox.ItemsSource = SaveFileNames;
 
             // 設定を読み込む
             LoadSettings();
-
-            // 初期の保存先フォルダを表示
-            SelectedFolderLabel.Text = "選択されたフォルダ: " + saveFolderPath;
 
             // 起動時に列数を初期設定
             AdjustThumbnailGridColumns();
@@ -154,9 +149,12 @@ namespace ScreenCaptureTool
                             Height = settings.WindowHeight;
                         }
 
+                        // 保存ファイル名一覧
+                        SaveFileNames = settings.SaveFileNames;
+                        FileNameComboBox.ItemsSource = SaveFileNames;
+
                         // 保存先フォルダ
                         saveFolderPath = settings.SaveFolderPath;
-                        SelectedFolderLabel.Text = "選択されたフォルダ: " + saveFolderPath;
                     }
                 }
                 catch (Exception ex)
@@ -164,10 +162,9 @@ namespace ScreenCaptureTool
                     MessageBox.Show("設定ファイルの読み込みに失敗しました: " + ex.Message);
                 }
             }
-            else
-            {
-                SelectedFolderLabel.Text = "選択されたフォルダ: " + saveFolderPath;
-            }
+
+            // UIに反映
+            SelectedFolderTextBox.Text = saveFolderPath;
         }
 
         /// <summary>
@@ -177,23 +174,23 @@ namespace ScreenCaptureTool
         {
             try
             {
-                AppSettings settings = new AppSettings
-                {
-                    // ウィンドウの位置とサイズ
-                    WindowTop = Top,
-                    WindowLeft = Left,
-                    WindowWidth = Width,
-                    WindowHeight = Height,
-                    // キャプチャー範囲
-                    CaptureLeft = int.TryParse(CaptureLeftTextBox.Text, out var x) ? x : 0,
-                    CaptureTop = int.TryParse(CaptureTopTextBox.Text, out var y) ? y : 0,
-                    CaptureWidth = int.TryParse(CaptureWidthTextBox.Text, out var width) ? width : 0,
-                    CaptureHeight = int.TryParse(CaptureHeightTextBox.Text, out var height) ? height : 0,
-                    // サムネイルサイズ
-                    ThumbnailSize = thumbnailSize,
-                    // 保存先フォルダ
-                    SaveFolderPath = saveFolderPath
-                };
+                AppSettings settings = new AppSettings();
+                // ウィンドウの位置とサイズ
+                settings.WindowTop = Top;
+                settings.WindowLeft = Left;
+                settings.WindowWidth = Width;
+                settings.WindowHeight = Height;
+                // キャプチャー範囲
+                settings.CaptureLeft = int.TryParse(CaptureLeftTextBox.Text, out var x) ? x : 0;
+                settings.CaptureTop = int.TryParse(CaptureTopTextBox.Text, out var y) ? y : 0;
+                settings.CaptureWidth = int.TryParse(CaptureWidthTextBox.Text, out var width) ? width : 0;
+                settings.CaptureHeight = int.TryParse(CaptureHeightTextBox.Text, out var height) ? height : 0;
+                // サムネイルサイズ
+                settings.ThumbnailSize = thumbnailSize;
+                // 保存ファイル名一覧
+                settings.SaveFileNames = SaveFileNames;
+                // 保存先フォルダ
+                settings.SaveFolderPath = saveFolderPath;
 
                 XmlSerializer serializer = new XmlSerializer(typeof(AppSettings));
                 using (FileStream fs = new FileStream(SettingsFilePath, FileMode.Create))
@@ -385,7 +382,7 @@ namespace ScreenCaptureTool
                     // 新しいファイル名をComboBoxのリストに追加
                     if (!FileNameComboBox.Items.Contains(selectedFileName))
                     {
-                        defaultFileNames.Add(selectedFileName);
+                        SaveFileNames.Add(selectedFileName);
                     }
 
                     // 設定を保存
@@ -586,7 +583,7 @@ namespace ScreenCaptureTool
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     saveFolderPath = dialog.SelectedPath;
-                    SelectedFolderLabel.Text = "選択されたフォルダ: " + saveFolderPath;
+                    SelectedFolderTextBox.Text = saveFolderPath;
 
                     // 選択されたフォルダの一覧を表示
                     LoadImagesFromFolder();
