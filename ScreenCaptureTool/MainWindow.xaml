@@ -89,12 +89,12 @@
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Gray" ShowsPreview="True" />
 
             <!-- 右側のサムネイル表示エリア -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" SizeChanged="ImageGrid_SizeChanged">
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
                 <ItemsControl x:Name="ThumbnailItemsControl" ItemsSource="{Binding ImageFiles}">
                     <ItemsControl.ItemsPanel>
-                        <!-- 行列形式でアイテムを表示するUniformGrid -->
                         <ItemsPanelTemplate>
-                            <UniformGrid />
+                            <!-- WrapPanelを使用して上寄せで表示 -->
+                            <WrapPanel VerticalAlignment="Top" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>

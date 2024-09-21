@@ -13,11 +13,40 @@ namespace ScreenCaptureTool
     /// </summary>
     public class ImageFile : INotifyPropertyChanged
     {
+        #region Variables
+
+        /// <summary>
+        /// ファイル名
+        /// </summary>
         public string FileName { get; set; }
+
+        /// <summary>
+        /// 画像イメージ
+        /// </summary>
         public BitmapImage Thumbnail { get; set; }
 
+        /// <summary>
+        /// サムネイル画像：幅
+        /// </summary>
         private int thumbnailWidth;
 
+        /// <summary>
+        /// サムネイル画像：高さ
+        /// </summary>
+        private int thumbnailHeight;
+
+        /// <summary>
+        /// 値変更のイベントハンドラ
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        #endregion Variables
+
+        #region Properties
+
+        /// <summary>
+        /// サムネイル画像：幅
+        /// </summary>
         public int ThumbnailWidth
         {
             get { return thumbnailWidth; }
@@ -31,8 +60,9 @@ namespace ScreenCaptureTool
             }
         }
 
-        private int thumbnailHeight;
-
+        /// <summary>
+        /// サムネイル画像：高さ
+        /// </summary>
         public int ThumbnailHeight
         {
             get { return thumbnailHeight; }
@@ -46,11 +76,19 @@ namespace ScreenCaptureTool
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        #endregion Properties
 
+        #region Events
+
+        /// <summary>
+        /// プロパティの値変更イベント
+        /// </summary>
+        /// <param name="propertyName">プロパティ名</param>
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        #endregion Events
     }
 }

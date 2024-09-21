@@ -381,34 +381,6 @@ namespace ScreenCaptureTool
         #region Thumbnails
 
         /// <summary>
-        /// サムネイル一覧の列数を調整する
-        /// </summary>
-        private void AdjustThumbnailGridColumns()
-        {
-            if (ThumbnailItemsControl == null)
-            {
-                return;
-            }
-
-            // サムネイル1つあたりの横幅と余白の合計
-            int thumbnailTotalWidth = thumbnailSize + 20;
-
-            // サムネイル表示エリアの幅を取得
-            double thumbnailAreaWidth = ((ScrollViewer)ThumbnailItemsControl.Parent).ActualWidth;
-
-            // サムネイル表示エリアの幅に基づいて、表示可能な列数を計算
-            int columns = Math.Max(1, (int)Math.Floor(thumbnailAreaWidth / thumbnailTotalWidth));
-
-            // ItemsControlからUniformGridを取得
-            UniformGrid? uniformGrid = FindVisualChild<UniformGrid>(ThumbnailItemsControl);
-
-            if (uniformGrid != null)
-            {
-                uniformGrid.Columns = columns;
-            }
-        }
-
-        /// <summary>
         /// BitmapをPNG形式で保存する
         /// </summary>
         /// <param name="bitmap">Bitmap</param>
@@ -417,14 +389,15 @@ namespace ScreenCaptureTool
         /// <returns>保存先のパス(失敗時はnull)</returns>
         private string SaveBitmapAsPng(Bitmap bitmap, string folderPath, string fileName)
         {
-            if (!Directory.Exists(folderPath))
-            {
-                Directory.CreateDirectory(folderPath);
-            }
-
-            // フルファイル名を作成
+            // パスを作成
             string fullFileName = $"{fileName}.png";
             string filePath = Path.Combine(folderPath, fullFileName);
+
+            // フォルダが存在しない場合は作成する
+            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            }
 
             // ファイルが既に存在する場合、上書き確認ダイアログを表示
             if (File.Exists(filePath))
@@ -462,38 +435,43 @@ namespace ScreenCaptureTool
         /// <returns>true:成功 / false:失敗</returns>
         private bool DeleteImageFile(string filePath)
         {
-            // 一致する ImageFile を検索
-            var itemToRemove = ImageFiles.FirstOrDefault(item => item.FileName == Path.GetFileName(filePath));
-
-            if (itemToRemove != null)
+            // 実際のファイルも削除
+            if (File.Exists(filePath))
             {
-                // コレクションから削除
-                ImageFiles.Remove(itemToRemove);
-
-                // 実際のファイルも削除する場合は、以下のコードを追加
-                if (File.Exists(filePath))
+                // ファイルがロックされているかどうかを確認
+                if (!IsFileLocked(filePath))
                 {
-                    // ファイルがロックされているかどうかを確認
-                    if (!IsFileLocked(filePath))
+                    try
                     {
-                        try
-                        {
-                            // ファイルをゴミ箱に移動
-                            FileSystem.DeleteFile(filePath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-                            return true;
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"ファイルの削除に失敗しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
+                        // ファイルをゴミ箱に移動
+                        FileSystem.DeleteFile(filePath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        MessageBox.Show("ファイルがロックされているため、削除できません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"ファイルの削除に失敗しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return false;
                     }
                 }
+                else
+                {
+                    MessageBox.Show("ファイルがロックされているため、削除できません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
+                }
             }
-            return false;
+
+            // 保存先フォルダと削除対象のファイルが同一フォルダか？
+            if (Path.GetDirectoryName(filePath) == saveFolderPath)
+            {
+                // 一致する ImageFile を検索
+                var itemToRemove = ImageFiles.FirstOrDefault(item => item.FileName == Path.GetFileName(filePath));
+                if (itemToRemove != null)
+                {
+                    // コレクションから削除
+                    ImageFiles.Remove(itemToRemove);
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -519,6 +497,12 @@ namespace ScreenCaptureTool
         /// <param name="filePath">画像のパス</param>
         private void AddImageToList(string filePath)
         {
+            // 保存先フォルダと削除対象のファイルが同一フォルダでない場合は追加しない
+            if (Path.GetDirectoryName(filePath) != saveFolderPath)
+            {
+                return;
+            }
+
             try
             {
                 // サムネル画像を読み込む
@@ -666,6 +650,39 @@ namespace ScreenCaptureTool
 
             // 設定を保存
             SaveSettings();
+
+            // 選択されたフォルダのツリー更新
+            RefreshSelectedFolderTree();
+        }
+
+        /// <summary>
+        /// フォルダを再探索してツリーを更新する
+        /// </summary>
+        private void RefreshSelectedFolderTree()
+        {
+            var selectedItem = FolderTreeView.SelectedItem as TreeViewItem;
+            if (selectedItem != null)
+            {
+                // 現在選択されたフォルダの子要素をクリア
+                selectedItem.Items.Clear();
+
+                // 再度フォルダを展開し、ツリーに反映
+                try
+                {
+                    var directories = Directory.GetDirectories(selectedItem.Tag.ToString());
+                    foreach (var directory in directories)
+                    {
+                        var subItem = new TreeViewItem { Header = Path.GetFileName(directory), Tag = directory };
+                        subItem.Items.Add(null);  // ダミーアイテム
+                        subItem.Expanded += Folder_Expanded;
+                        selectedItem.Items.Add(subItem);
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // アクセスできないフォルダに対してのエラーハンドリング
+                }
+            }
         }
 
         #endregion FolderTree
@@ -702,9 +719,6 @@ namespace ScreenCaptureTool
                 // ComboBoxのTagからサイズを取得
                 thumbnailSize = int.Parse((string)selectedItem.Tag);
                 UpdateThumbnailsSize();  // サイズ変更後にサムネイル更新
-
-                // サムネイルサイズが変更されたら列数を再調整
-                AdjustThumbnailGridColumns();
             }
         }
 
@@ -795,16 +809,6 @@ namespace ScreenCaptureTool
                     MessageBox.Show("ファイルの削除に失敗しました: " + ex.Message);
                 }
             }
-        }
-
-        /// <summary>
-        /// 下部ペイン：サイズ変更
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ImageGrid_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            AdjustThumbnailGridColumns();
         }
 
         #endregion Events(Control)
