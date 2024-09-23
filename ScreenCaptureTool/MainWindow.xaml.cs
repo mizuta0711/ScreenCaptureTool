@@ -1,13 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Xml.Serialization;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -15,11 +16,64 @@ using Microsoft.VisualBasic.FileIO;
 
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using MessageBox = System.Windows.MessageBox;
+using System.Text;
 
 namespace ScreenCaptureTool
 {
     public partial class MainWindow : Window
     {
+        #region Win32 APIのインポート
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool IsWindowVisible(IntPtr hWnd);
+
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("gdi32.dll")]
+        private static extern int BitBlt(IntPtr hdcDest, int xDest, int yDest, int wDest, int hDest, IntPtr hdcSrc, int xSrc, int ySrc, int rop);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int nWidth, int nHeight);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteObject(IntPtr hObject);
+
+        [DllImport("gdi32.dll")]
+        private static extern bool DeleteDC(IntPtr hdc);
+
+        #endregion Win32 APIのインポート
+
         #region Variable
 
         /// <summary>
@@ -61,17 +115,15 @@ namespace ScreenCaptureTool
             // DataContextにImageFilesをバインド
             DataContext = this;
 
-            // ComboBox にファイル名リストを設定
-            FileNameComboBox.ItemsSource = SaveFileNames;
-
-            // 設定を読み込む
-            LoadSettings();
+            // ラジオボタンの選択によって表示するUIを切り替える
+            CaptureRectRadioButton.Checked += CaptureOption_CheckedChanged;
+            CaptureWindowRadioButton.Checked += CaptureOption_CheckedChanged;
 
             // フォルダツリーの初期化
             InitializeFolderTree();
 
-            // 保存先フォルダをツリーから選択状態にする
-            SelectFolderInTree(saveFolderPath);
+            // 設定を読み込む
+            LoadSettings();
         }
 
         #endregion Constructor
@@ -108,48 +160,70 @@ namespace ScreenCaptureTool
                     XmlSerializer serializer = new XmlSerializer(typeof(AppSettings));
                     using (FileStream fs = new FileStream(SettingsFilePath, FileMode.Open))
                     {
-                        AppSettings settings = (AppSettings)serializer.Deserialize(fs);
+                        AppSettings? settings = (AppSettings?)serializer.Deserialize(fs);
 
-                        // キャプチャー範囲
-                        CaptureLeftTextBox.Text = settings.CaptureLeft.ToString();
-                        CaptureTopTextBox.Text = settings.CaptureTop.ToString();
-                        CaptureWidthTextBox.Text = settings.CaptureWidth.ToString();
-                        CaptureHeightTextBox.Text = settings.CaptureHeight.ToString();
-
-                        // サムネイルサイズ
-                        if (settings.ThumbnailSize > 0)
+                        if (settings != null)
                         {
-                            thumbnailSize = settings.ThumbnailSize;
-                        }
+                            // キャプチャー範囲
+                            CaptureLeftTextBox.Text = settings.CaptureLeft.ToString();
+                            CaptureTopTextBox.Text = settings.CaptureTop.ToString();
+                            CaptureWidthTextBox.Text = settings.CaptureWidth.ToString();
+                            CaptureHeightTextBox.Text = settings.CaptureHeight.ToString();
 
-                        // ウィンドウの位置とサイズを設定
-                        if (settings.WindowTop >= 0 && settings.WindowLeft >= 0)
-                        {
-                            Top = settings.WindowTop;
-                            Left = settings.WindowLeft;
-                        }
-                        if (settings.WindowWidth > 0 && settings.WindowHeight > 0)
-                        {
-                            Width = settings.WindowWidth;
-                            Height = settings.WindowHeight;
-                        }
+                            // サムネイルサイズ
+                            if (settings.ThumbnailSize > 0)
+                            {
+                                thumbnailSize = settings.ThumbnailSize;
+                            }
 
-                        // 保存ファイル名一覧
-                        SaveFileNames = settings.SaveFileNames;
-                        FileNameComboBox.ItemsSource = SaveFileNames;
+                            // ウィンドウの位置とサイズを設定
+                            if (settings.WindowTop >= 0 && settings.WindowLeft >= 0)
+                            {
+                                Top = settings.WindowTop;
+                                Left = settings.WindowLeft;
+                            }
+                            if (settings.WindowWidth > 0 && settings.WindowHeight > 0)
+                            {
+                                Width = settings.WindowWidth;
+                                Height = settings.WindowHeight;
+                            }
 
-                        // 保存先フォルダ
-                        saveFolderPath = settings.SaveFolderPath;
+                            // ウィンドウタイトルを復元
+                            WindowTitleTextBox.Text = settings.CaptureWindowTitle;
+
+                            // チャプチャータイプを復元
+                            if (settings.SelectedCaptureType == AppSettings.CaptureType.ScreenRect)
+                            {
+                                CaptureRectRadioButton.IsChecked = true;
+                            }
+                            else
+                            {
+                                CaptureWindowRadioButton.IsChecked = true;
+                            }
+
+                            // 保存ファイル名一覧
+                            SaveFileNames = settings.SaveFileNames;
+
+                            // 保存先フォルダ
+                            saveFolderPath = settings.SaveFolderPath;
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("設定ファイルの読み込みに失敗しました: " + ex.Message);
+                    ShowErrorDialog("設定ファイルの読み込みに失敗しました: " + ex.Message);
                 }
             }
 
             // UIに反映
+            // 保存先フォルダ名
             SelectedFolderTextBox.Text = saveFolderPath;
+
+            // ファイル一覧
+            FileNameComboBox.ItemsSource = SaveFileNames;
+
+            // 保存先フォルダをツリーから選択状態にする
+            SelectFolderInTree(saveFolderPath);
         }
 
         /// <summary>
@@ -170,6 +244,10 @@ namespace ScreenCaptureTool
                 settings.CaptureTop = int.TryParse(CaptureTopTextBox.Text, out var y) ? y : 0;
                 settings.CaptureWidth = int.TryParse(CaptureWidthTextBox.Text, out var width) ? width : 0;
                 settings.CaptureHeight = int.TryParse(CaptureHeightTextBox.Text, out var height) ? height : 0;
+                // キャプチャーウィンドウタイトル
+                settings.CaptureWindowTitle = WindowTitleTextBox.Text;
+                // チャプチャータイプ
+                settings.SelectedCaptureType = (CaptureRectRadioButton.IsChecked ?? true) ? AppSettings.CaptureType.ScreenRect : AppSettings.CaptureType.Window;
                 // サムネイルサイズ
                 settings.ThumbnailSize = thumbnailSize;
                 // 保存ファイル名一覧
@@ -185,7 +263,7 @@ namespace ScreenCaptureTool
             }
             catch (Exception ex)
             {
-                MessageBox.Show("設定ファイルの保存に失敗しました: " + ex.Message);
+                ShowErrorDialog("設定ファイルの保存に失敗しました: " + ex.Message);
             }
         }
 
@@ -240,6 +318,26 @@ namespace ScreenCaptureTool
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// エラーダイアログを表示する
+        /// </summary>
+        /// <param name="message">メッセージ</param>
+        /// <param name="title">タイトル</param>
+        private static void ShowErrorDialog(string message)
+        {
+            MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        /// <summary>
+        /// 情報ダイアログを表示する
+        /// </summary>
+        /// <param name="message">メッセージ</param>
+        /// <param name="title">タイトル</param>
+        private static void ShowInformationDialog(string message)
+        {
+            MessageBox.Show(message, "情報", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion Utility
@@ -301,102 +399,37 @@ namespace ScreenCaptureTool
 
         #endregion BitmapUtility
 
-        #region ScreenCapture
+        #region CaptureTools
 
         /// <summary>
-        /// デスクトップの指定範囲をキャプチャーする
+        /// ファイルのフルパスを作成
         /// </summary>
-        private void CaptureDesktop()
+        /// <param name="folderPath">フォルダ名</param>
+        /// <param name="fileName">ファイル名(拡張子を除く)</param>
+        /// <param name="extension">拡張子(デフォルト："png")</param>
+        /// <returns>フルパス</returns>
+        private string CreateFilePath(string folderPath, string fileName, string extension = "png")
         {
-            // デスクトップの解像度を取得
-            int screenWidth = (int)SystemParameters.VirtualScreenWidth;
-            int screenHeight = (int)SystemParameters.VirtualScreenHeight;
-
-            // UIから矩形の設定を取得
-            if (!int.TryParse(CaptureLeftTextBox.Text, out int x) ||
-                !int.TryParse(CaptureTopTextBox.Text, out int y) ||
-                !int.TryParse(CaptureWidthTextBox.Text, out int width) ||
-                !int.TryParse(CaptureHeightTextBox.Text, out int height))
-            {
-                MessageBox.Show("矩形の設定が無効です。X、Y、幅、高さを正しく入力してください。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // 矩形のサイズをチェックして調整
-            if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
-                x + width > screenWidth || y + height > screenHeight)
-            {
-                MessageBox.Show("指定された矩形が無効です。画面の範囲内で正しい矩形を指定してください。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            CaptureDesktop(x, y, width, height);
+            // パスを作成
+            string fullFileName = $"{fileName}.{extension}";
+            return Path.Combine(folderPath, fullFileName);
         }
-
-        /// <summary>
-        /// デスクトップの指定範囲をキャプチャーする
-        /// </summary>
-        /// <param name="x">X</param>
-        /// <param name="y">Y</param>
-        /// <param name="width">幅</param>
-        /// <param name="height">高さ</param>
-        private void CaptureDesktop(int x, int y, int width, int height)
-        {
-            // 矩形のビットマップを作成
-            using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
-            {
-                using (Graphics graphics = Graphics.FromImage(bitmap))
-                {
-                    graphics.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
-                }
-
-                // ComboBoxから選択または入力されたファイル名を取得
-                string selectedFileName = FileNameComboBox.Text.Trim();
-                if (string.IsNullOrEmpty(selectedFileName))
-                {
-                    MessageBox.Show("ファイル名を入力してください。");
-                    return;
-                }
-                string filePath = SaveBitmapAsPng(bitmap, saveFolderPath, selectedFileName);
-
-                if (filePath != null)
-                {
-                    // サムネイルリストを更新
-                    AddImageToList(filePath);
-
-                    // 新しいファイル名をComboBoxのリストに追加
-                    if (!FileNameComboBox.Items.Contains(selectedFileName))
-                    {
-                        SaveFileNames.Add(selectedFileName);
-                    }
-
-                    // 設定を保存
-                    SaveSettings();
-                }
-            }
-        }
-
-        #endregion ScreenCapture
-
-        #region Thumbnails
 
         /// <summary>
         /// BitmapをPNG形式で保存する
         /// </summary>
         /// <param name="bitmap">Bitmap</param>
-        /// <param name="folderPath">フォルダパス</param>
-        /// <param name="fileName">ファイル名(拡張子は含まない)</param>
-        /// <returns>保存先のパス(失敗時はnull)</returns>
-        private string SaveBitmapAsPng(Bitmap bitmap, string folderPath, string fileName)
+        /// <param name="filePath">保存先のパス</param>
+        /// <returns>true: 保存 / false: 失敗</returns>
+        private bool SaveBitmapAsPng(Bitmap bitmap, string filePath)
         {
-            // パスを作成
-            string fullFileName = $"{fileName}.png";
-            string filePath = Path.Combine(folderPath, fullFileName);
-
             // フォルダが存在しない場合は作成する
             if (!Directory.Exists(Path.GetDirectoryName(filePath)))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+                if (Path.GetDirectoryName(filePath) is string parentFolderPath)
+                {
+                    Directory.CreateDirectory(parentFolderPath);
+                }
             }
 
             // ファイルが既に存在する場合、上書き確認ダイアログを表示
@@ -411,29 +444,38 @@ namespace ScreenCaptureTool
                 if (result == MessageBoxResult.No)
                 {
                     // 上書きをキャンセル
-                    return null;
+                    return false;
                 }
 
-                // リストから削除
+                // 既存ファイルを削除
                 if (DeleteImageFile(filePath) == false)
                 {
                     // 上書きをキャンセル
-                    return null;
+                    return false;
                 }
             }
 
             // PNGとして保存
-            bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
-
-            return filePath;
+            try
+            {
+                bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ShowErrorDialog("ファイルの保存に失敗しました: " + ex.Message);
+                return false;
+            }
         }
 
         /// <summary>
-        /// 画像ファイルを削除(ファイルはゴミ箱に移動、画像一覧からも削除)
+        /// 画像ファイルを削除(ゴミ箱に移動)
+        /// ※サムネイル一覧も更新する
         /// </summary>
         /// <param name="filePath">パス</param>
+        /// <param name="isMoveToTrush">ゴミ箱に移動するか</param>
         /// <returns>true:成功 / false:失敗</returns>
-        private bool DeleteImageFile(string filePath)
+        private bool DeleteImageFile(string filePath, bool isMoveToTrush = true)
         {
             // 実際のファイルも削除
             if (File.Exists(filePath))
@@ -443,18 +485,26 @@ namespace ScreenCaptureTool
                 {
                     try
                     {
-                        // ファイルをゴミ箱に移動
-                        FileSystem.DeleteFile(filePath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                        if (isMoveToTrush)
+                        {
+                            // ファイルをゴミ箱に移動
+                            FileSystem.DeleteFile(filePath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                        }
+                        else
+                        {
+                            // ファイルを削除
+                            File.Delete(filePath);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"ファイルの削除に失敗しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                        ShowErrorDialog("ファイルの削除に失敗しました: " + ex.Message);
                         return false;
                     }
                 }
                 else
                 {
-                    MessageBox.Show("ファイルがロックされているため、削除できません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowErrorDialog("ファイルがロックされているため、削除できません。");
                     return false;
                 }
             }
@@ -473,6 +523,188 @@ namespace ScreenCaptureTool
 
             return true;
         }
+
+        /// <summary>
+        /// キャプチャー画像を現在選択されているファイル名で保存する
+        /// ※サムネイル一覧も更新する
+        /// </summary>
+        /// <param name="bitmap">画像</param>
+        /// <returns>true: 成功 / false: 失敗</returns>
+        private bool SaveCaptureImage(Bitmap bitmap)
+        {
+            // ComboBoxから選択または入力されたファイル名を取得
+            string selectedFileName = FileNameComboBox.Text.Trim();
+            if (string.IsNullOrEmpty(selectedFileName))
+            {
+                ShowErrorDialog("ファイル名を入力してください。");
+                return false;
+            }
+
+            // PNGで保存
+            string filePath = CreateFilePath(saveFolderPath, selectedFileName);
+            if (SaveBitmapAsPng(bitmap, filePath) == false)
+            {
+                return false;
+            }
+
+            // サムネイルリストを更新
+            AddImageToList(filePath);
+
+            // 新しいファイル名をComboBoxのリストに追加
+            if (!FileNameComboBox.Items.Contains(selectedFileName))
+            {
+                SaveFileNames.Add(selectedFileName);
+            }
+
+            // 設定を保存
+            SaveSettings();
+
+            return true;
+        }
+
+        #endregion CaptureTools
+
+        #region ScreenCapture
+
+        /// <summary>
+        /// デスクトップの指定範囲をキャプチャーする
+        /// </summary>
+        /// <returns>true: 成功　/ false: 失敗</returns>
+        private bool CaptureScreenRect()
+        {
+            // デスクトップの解像度を取得
+            int screenWidth = (int)SystemParameters.VirtualScreenWidth;
+            int screenHeight = (int)SystemParameters.VirtualScreenHeight;
+
+            // UIから矩形の設定を取得
+            if (!int.TryParse(CaptureLeftTextBox.Text, out int x) ||
+                !int.TryParse(CaptureTopTextBox.Text, out int y) ||
+                !int.TryParse(CaptureWidthTextBox.Text, out int width) ||
+                !int.TryParse(CaptureHeightTextBox.Text, out int height))
+            {
+                ShowErrorDialog("矩形の設定が無効です。X、Y、幅、高さを正しく入力してください。");
+                return false;
+            }
+
+            // 矩形のサイズをチェックして調整
+            if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+                x + width > screenWidth || y + height > screenHeight)
+            {
+                ShowErrorDialog("指定された矩形が無効です。画面の範囲内で正しい矩形を指定してください。");
+                return false;
+            }
+
+            // 矩形のビットマップを作成
+            using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
+            {
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
+                }
+                return SaveCaptureImage(bitmap);
+            }
+        }
+
+        #endregion ScreenCapture
+
+        #region CaptureWindow
+
+        // 部分一致でウィンドウを検索
+        private IntPtr FindWindowByTitle(string partialTitle)
+        {
+            IntPtr foundWindow = IntPtr.Zero;
+
+            EnumWindows((hWnd, lParam) =>
+            {
+                StringBuilder windowTitle = new StringBuilder(256);
+                GetWindowText(hWnd, windowTitle, 256);
+
+                if (windowTitle.ToString().Contains(partialTitle, StringComparison.OrdinalIgnoreCase) && IsWindowVisible(hWnd))
+                {
+                    foundWindow = hWnd;
+                    return false; // ウィンドウが見つかったので列挙を終了
+                }
+                return true; // まだ見つかっていないので続行
+            }, IntPtr.Zero);
+
+            return foundWindow;
+        }
+
+        /// <summary>
+        /// ウィンドウタイトルキャプチャ処理
+        /// </summary>
+        /// <param name="windowTitle">ウィンドウタイトル</param>
+        /// <returns>true: 成功　/ false: 失敗</returns>
+        private bool CaptureWindowByTitle(string windowTitle)
+        {
+            if (string.IsNullOrWhiteSpace(windowTitle))
+            {
+                ShowErrorDialog("ウィンドウタイトルを入力してください。");
+                return false;
+            }
+
+            IntPtr hWnd = FindWindowByTitle(windowTitle);
+            if (hWnd == IntPtr.Zero)
+            {
+                ShowErrorDialog("指定されたウィンドウが見つかりません。");
+                return false;
+            }
+
+            // ウィンドウの位置とサイズを取得
+            if (GetWindowRect(hWnd, out RECT rect) == false)
+            {
+                ShowErrorDialog("ウィンドウの位置を取得できませんでした。");
+                return false;
+            }
+
+            // RECTから幅と高さを計算
+            int width = rect.Right - rect.Left;
+            int height = rect.Bottom - rect.Top;
+
+            // ウィンドウ全体のビットマップを作成
+            Bitmap bitmap = CaptureWindow(hWnd, width, height);
+            return SaveCaptureImage(bitmap);
+        }
+
+        /// <summary>
+        /// ウィンドウをキャプチャーしたBitmapを生成
+        /// </summary>
+        /// <param name="hWnd">ウィンドウハンドル</param>
+        /// <param name="width">幅</param>
+        /// <param name="height">高さ</param>
+        /// <returns>Bitmap</returns>
+        private Bitmap CaptureWindow(IntPtr hWnd, int width, int height)
+        {
+            const int SRCCOPY = 0x00CC0020;
+
+            // ウィンドウのDCを取得
+            IntPtr hdcWindow = GetDC(hWnd);
+            IntPtr hdcMemDC = CreateCompatibleDC(hdcWindow);
+
+            // ウィンドウのビットマップを作成
+            IntPtr hBitmap = CreateCompatibleBitmap(hdcWindow, width, height);
+            IntPtr hOld = SelectObject(hdcMemDC, hBitmap);
+
+            // ウィンドウのビットブロック転送 (BitBlt) を実行
+            BitBlt(hdcMemDC, 0, 0, width, height, hdcWindow, 0, 0, SRCCOPY);
+
+            // ビットマップを取得
+            Bitmap bmp = Bitmap.FromHbitmap(hBitmap);
+
+            // リソース解放
+            SelectObject(hdcMemDC, hOld);
+            DeleteObject(hBitmap);
+            DeleteDC(hdcMemDC);
+
+            // ウィンドウのDCを解放
+            DeleteDC(hdcWindow);
+
+            return bmp;
+        }
+
+        #endregion CaptureWindow
+
+        #region Thumbnails
 
         /// <summary>
         /// 保存先フォルダの画像一覧を取得する
@@ -520,7 +752,7 @@ namespace ScreenCaptureTool
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"画像の読み込みに失敗しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowErrorDialog("画像の読み込みに失敗しました: " + ex.Message);
             }
         }
 
@@ -584,7 +816,10 @@ namespace ScreenCaptureTool
             var selectedItem = FolderTreeView.SelectedItem as TreeViewItem;
             if (selectedItem != null)
             {
-                SelectCurrentFolder(selectedItem.Tag.ToString());
+                if (selectedItem.Tag.ToString() is string folderPath)
+                {
+                    SelectCurrentFolder(folderPath);
+                }
             }
         }
 
@@ -593,7 +828,7 @@ namespace ScreenCaptureTool
         {
             string[] pathParts = saveFolderPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-            TreeViewItem currentItem = null;
+            TreeViewItem? currentItem = null;
 
             foreach (TreeViewItem driveItem in FolderTreeView.Items)
             {
@@ -607,7 +842,9 @@ namespace ScreenCaptureTool
 
             // ドライブが見つからない場合は終了
             if (currentItem == null)
+            {
                 return;
+            }
 
             // ドライブ以下のフォルダを順次展開していく
             for (int i = 1; i < pathParts.Length; i++)
@@ -669,18 +906,22 @@ namespace ScreenCaptureTool
                 // 再度フォルダを展開し、ツリーに反映
                 try
                 {
-                    var directories = Directory.GetDirectories(selectedItem.Tag.ToString());
-                    foreach (var directory in directories)
+                    if (selectedItem.Tag.ToString() is string folderPath)
                     {
-                        var subItem = new TreeViewItem { Header = Path.GetFileName(directory), Tag = directory };
-                        subItem.Items.Add(null);  // ダミーアイテム
-                        subItem.Expanded += Folder_Expanded;
-                        selectedItem.Items.Add(subItem);
+                        var directories = Directory.GetDirectories(folderPath);
+                        foreach (var directory in directories)
+                        {
+                            var subItem = new TreeViewItem { Header = Path.GetFileName(directory), Tag = directory };
+                            subItem.Items.Add(null);  // ダミーアイテム
+                            subItem.Expanded += Folder_Expanded;
+                            selectedItem.Items.Add(subItem);
+                        }
                     }
                 }
-                catch (UnauthorizedAccessException)
+                catch (UnauthorizedAccessException ex)
                 {
                     // アクセスできないフォルダに対してのエラーハンドリング
+                    ShowErrorDialog("フォルダにアクセスできませんでした: " + ex.Message);
                 }
             }
         }
@@ -708,6 +949,26 @@ namespace ScreenCaptureTool
         }
 
         /// <summary>
+        /// キャプチャー選択ラジオボタン：選択が変更された
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CaptureOption_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            // 矩形キャプチャーが選ばれている場合、矩形入力パネルを表示
+            if (CaptureRectRadioButton.IsChecked == true)
+            {
+                RectCapturePanel.Visibility = Visibility.Visible;
+                WindowCapturePanel.Visibility = Visibility.Collapsed;
+            }
+            else if (CaptureWindowRadioButton.IsChecked == true)
+            {
+                RectCapturePanel.Visibility = Visibility.Collapsed;
+                WindowCapturePanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        /// <summary>
         /// サムネイルサイズ変更のコンボボックス：選択変更
         /// </summary>
         /// <param name="sender"></param>
@@ -723,14 +984,23 @@ namespace ScreenCaptureTool
         }
 
         /// <summary>
-        /// キャプチャーボタン：押下
+        /// 撮影ボタン：押下
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void CaptureDesktopButton_Click(object sender, RoutedEventArgs e)
+        private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
-            // デスクトップ全体をキャプチャ
-            CaptureDesktop();
+            // ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
+            if (CaptureRectRadioButton.IsChecked == true)
+            {
+                // 矩形キャプチャ処理
+                CaptureScreenRect();
+            }
+            else if (CaptureWindowRadioButton.IsChecked == true)
+            {
+                // ウィンドウタイトルキャプチャ処理
+                CaptureWindowByTitle(WindowTitleTextBox.Text);
+            }
         }
 
         /// <summary>
@@ -781,18 +1051,12 @@ namespace ScreenCaptureTool
 
             if (IsFileLocked(filePath))
             {
-                MessageBox.Show("ファイルがロックされているため、削除できません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowErrorDialog("ファイルがロックされているため、削除できません。");
                 return;
             }
 
             // 確認ダイアログを表示
-            var result = MessageBox.Show(
-                $"このファイルを削除しますか？\n{filePath}",
-                "削除確認",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+            if (MessageBox.Show($"このファイルを削除しますか？\n{filePath}", "削除確認", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 try
                 {
@@ -802,11 +1066,11 @@ namespace ScreenCaptureTool
                     // リストから削除
                     ImageFiles.Remove(imageFile);
 
-                    MessageBox.Show("ファイルはゴミ箱に移動されました。");
+                    ShowInformationDialog("ファイルはゴミ箱に移動されました。");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("ファイルの削除に失敗しました: " + ex.Message);
+                    ShowErrorDialog("ファイルの削除に失敗しました: " + ex.Message);
                 }
             }
         }

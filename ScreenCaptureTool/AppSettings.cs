@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ScreenCaptureTool
 {
@@ -13,6 +9,12 @@ namespace ScreenCaptureTool
     [Serializable]
     public class AppSettings
     {
+        public enum CaptureType
+        {
+            ScreenRect,     // 画面の矩形
+            Window          // ウィンドウ
+        }
+
         /// <summary>
         /// キャプチャー範囲：X
         /// </summary>
@@ -52,6 +54,16 @@ namespace ScreenCaptureTool
         /// ウィンドウサイズ：高さ
         /// </summary>
         public double WindowHeight { get; set; }
+
+        /// <summary>
+        /// キャプチャーするウィンドウタイトル
+        /// </summary>
+        public string CaptureWindowTitle { get; set; }
+
+        /// <summary>
+        /// チャプチャータイプ
+        /// </summary>
+        public CaptureType SelectedCaptureType { get; set; }
 
         /// <summary>
         /// サムネイル画像サイズ

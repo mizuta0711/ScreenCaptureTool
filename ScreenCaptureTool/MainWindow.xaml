@@ -23,8 +23,25 @@
                 <Button Content="選択" Width="50" Height="30" Click="SelectFolderButton_Click" />
             </StackPanel>
 
+            <StackPanel Orientation="Horizontal">
+                <!-- キャプチャ方法選択のラジオボタン -->
+                <TextBlock Text="キャプチャ方法:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <RadioButton x:Name="CaptureRectRadioButton" Content="矩形を指定" IsChecked="True" GroupName="CaptureOption"  VerticalAlignment="Center" />
+                <RadioButton x:Name="CaptureWindowRadioButton" Content="ウィンドウタイトル" GroupName="CaptureOption"  VerticalAlignment="Center" Margin="20,0,0,0" />
+
+                <!-- サムネイルサイズ選択 -->
+                <TextBlock Text="サムネイルサイズ:" VerticalAlignment="Center" Margin="20,0,0,0" />
+                <ComboBox x:Name="ThumbnailSizeComboBox" Width="50" SelectionChanged="ThumbnailSizeComboBox_SelectionChanged" Margin="10,0,0,0">
+                    <ComboBoxItem Content="特大" Tag="500" />
+                    <ComboBoxItem Content="大" Tag="300" />
+                    <ComboBoxItem Content="中" Tag="200" IsSelected="True" />
+                    <ComboBoxItem Content="小" Tag="100" />
+                </ComboBox>
+            </StackPanel>
+
             <StackPanel Orientation="Horizontal" Margin="10,0,10,0">
-                <StackPanel Orientation="Horizontal">
+                <!-- 矩形指定パネル -->
+                <StackPanel x:Name="RectCapturePanel" Orientation="Horizontal">
                     <!-- 撮影範囲 -->
                     <StackPanel>
                         <TextBlock Text="撮影範囲" FontWeight="Bold" Margin="0,5" VerticalAlignment="Center" />
@@ -51,22 +68,23 @@
                     </StackPanel>
                 </StackPanel>
 
+                <!-- ウィンドウタイトル指定パネル -->
+                <StackPanel x:Name="WindowCapturePanel">
+                    <StackPanel Margin="10,0,10,0">
+                        <TextBlock Text="ウィンドウタイトル:" FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBox x:Name="WindowTitleTextBox" Width="150" Height="25" Margin="10,0,0,0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Text="保存ファイル名:" FontWeight="Bold" VerticalAlignment="Center" />
+                    <ComboBox x:Name="FileNameComboBox" Width="150" Height="25" IsEditable="True"  Margin="10,0,0,0" />
+                </StackPanel>
+
                 <StackPanel>
                     <!-- ファイル名と撮影ボタン -->
                     <StackPanel Orientation="Horizontal" Margin="10,0,0,10">
-                        <ComboBox x:Name="FileNameComboBox" Width="150" IsEditable="True" />
-                        <Button Content="撮影" Width="150" Height="30" Click="CaptureDesktopButton_Click" Margin="10,0,0,0" />
-                    </StackPanel>
-
-                    <!-- サムネイルサイズ選択 -->
-                    <StackPanel Orientation="Horizontal" Margin="10,0,0,0">
-                        <TextBlock Text="サムネイルサイズ:" VerticalAlignment="Center" />
-                        <ComboBox x:Name="ThumbnailSizeComboBox" Width="50" SelectionChanged="ThumbnailSizeComboBox_SelectionChanged" Margin="10,0,0,0">
-                            <ComboBoxItem Content="特大" Tag="500" />
-                            <ComboBoxItem Content="大" Tag="300" />
-                            <ComboBoxItem Content="中" Tag="200" IsSelected="True" />
-                            <ComboBoxItem Content="小" Tag="100" />
-                        </ComboBox>
+                        <Button Content="撮影" Width="70" Height="50" Click="CaptureButton_Click" Margin="10,0,0,0" />
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
