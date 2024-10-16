@@ -5,76 +5,20 @@ using System.Drawing.Imaging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Xml.Serialization;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualBasic.FileIO;
-
-using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using MessageBox = System.Windows.MessageBox;
-using System.Text;
-using Microsoft.Win32;
+using ScreenCaptureTool.Models;
+using ScreenCaptureTool.Models.CaptureItem;
 
 namespace ScreenCaptureTool
 {
     public partial class MainWindow : Window
     {
-        #region Win32 APIのインポート
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool IsWindowVisible(IntPtr hWnd);
-
-        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetDC(IntPtr hWnd);
-
-        [DllImport("gdi32.dll")]
-        private static extern int BitBlt(IntPtr hdcDest, int xDest, int yDest, int wDest, int hDest, IntPtr hdcSrc, int xSrc, int ySrc, int rop);
-
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
-
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int nWidth, int nHeight);
-
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr SelectObject(IntPtr hdc, IntPtr hgdiobj);
-
-        [DllImport("gdi32.dll")]
-        private static extern bool DeleteObject(IntPtr hObject);
-
-        [DllImport("gdi32.dll")]
-        private static extern bool DeleteDC(IntPtr hdc);
-
-        #endregion Win32 APIのインポート
-
         #region Variable
 
         /// <summary>
@@ -230,7 +174,7 @@ namespace ScreenCaptureTool
             // キャプチャーウィンドウタイトル
             settings.CaptureWindowTitle = WindowTitleTextBox.Text;
             // チャプチャータイプ
-            settings.SelectedCaptureType = (CaptureRectRadioButton.IsChecked ?? true) ? ProjectSettings.CaptureType.ScreenRect : ProjectSettings.CaptureType.Window;
+            settings.SelectedCaptureType = CaptureRectRadioButton.IsChecked ?? true ? ProjectSettings.CaptureType.ScreenRect : ProjectSettings.CaptureType.Window;
             // サムネイルサイズ
             settings.ThumbnailSize = thumbnailSize;
             // 保存ファイル名一覧
@@ -292,63 +236,6 @@ namespace ScreenCaptureTool
         }
 
         #endregion Settings
-
-        #region MenuEventHandlers
-
-        /// <summary>
-        /// 開く：メニュー
-        /// </summary>
-        private void OnOpenProjectMenu_Clicked(object sender, RoutedEventArgs e)
-        {
-            // ダイアログでファイルを選択
-            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-            openFileDialog.Filter = "Screen Capture Project (*.scp)|*.scp";
-            if (openFileDialog.ShowDialog() == true)
-            {
-                LoadProjectFile(openFileDialog.FileName);
-            }
-        }
-
-        /// <summary>
-        /// 上書き保存：メニュー
-        /// </summary>
-
-        private void OnSaveProjectMenu_Clicked(object sender, RoutedEventArgs e)
-        {
-            if (projectSettings.FilePath != null)
-            {
-                SaveProjectFile(projectSettings);
-            }
-            else
-            {
-                OnSaveAsProjectMenu_Clicked(sender, e);
-            }
-        }
-
-        /// <summary>
-        /// 名前を付けて保存：メニュー
-        /// </summary>
-        private void OnSaveAsProjectMenu_Clicked(object sender, RoutedEventArgs e)
-        {
-            // ダイアログで保存先を指定
-            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
-            saveFileDialog.Filter = "Screen Capture Project (*.scp)|*.scp";
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                projectSettings.FilePath = saveFileDialog.FileName;
-                SaveProjectFile(projectSettings);
-            }
-        }
-
-        /// <summary>
-        /// 終了：メニュー
-        /// </summary>
-        private void OnExitMenu_Clicked(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-
-        #endregion MenuEventHandlers
 
         #region Utility
 
@@ -539,7 +426,7 @@ namespace ScreenCaptureTool
             // PNGとして保存
             try
             {
-                bitmap.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+                bitmap.Save(filePath, ImageFormat.Png);
                 return true;
             }
             catch (Exception ex)
@@ -641,146 +528,6 @@ namespace ScreenCaptureTool
         }
 
         #endregion CaptureTools
-
-        #region ScreenCapture
-
-        /// <summary>
-        /// デスクトップの指定範囲をキャプチャーする
-        /// </summary>
-        /// <returns>true: 成功　/ false: 失敗</returns>
-        private bool CaptureScreenRect()
-        {
-            // デスクトップの解像度を取得
-            int screenWidth = (int)SystemParameters.VirtualScreenWidth;
-            int screenHeight = (int)SystemParameters.VirtualScreenHeight;
-
-            // UIから矩形の設定を取得
-            if (!int.TryParse(CaptureLeftTextBox.Text, out int x) ||
-                !int.TryParse(CaptureTopTextBox.Text, out int y) ||
-                !int.TryParse(CaptureWidthTextBox.Text, out int width) ||
-                !int.TryParse(CaptureHeightTextBox.Text, out int height))
-            {
-                ShowErrorDialog("矩形の設定が無効です。X、Y、幅、高さを正しく入力してください。");
-                return false;
-            }
-
-            // 矩形のサイズをチェックして調整
-            if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
-                x + width > screenWidth || y + height > screenHeight)
-            {
-                ShowErrorDialog("指定された矩形が無効です。画面の範囲内で正しい矩形を指定してください。");
-                return false;
-            }
-
-            // 矩形のビットマップを作成
-            using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
-            {
-                using (Graphics graphics = Graphics.FromImage(bitmap))
-                {
-                    graphics.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
-                }
-                return SaveCaptureImage(bitmap);
-            }
-        }
-
-        #endregion ScreenCapture
-
-        #region CaptureWindow
-
-        // 部分一致でウィンドウを検索
-        private IntPtr FindWindowByTitle(string partialTitle)
-        {
-            IntPtr foundWindow = IntPtr.Zero;
-
-            EnumWindows((hWnd, lParam) =>
-            {
-                StringBuilder windowTitle = new StringBuilder(256);
-                GetWindowText(hWnd, windowTitle, 256);
-
-                if (windowTitle.ToString().Contains(partialTitle, StringComparison.OrdinalIgnoreCase) && IsWindowVisible(hWnd))
-                {
-                    foundWindow = hWnd;
-                    return false; // ウィンドウが見つかったので列挙を終了
-                }
-                return true; // まだ見つかっていないので続行
-            }, IntPtr.Zero);
-
-            return foundWindow;
-        }
-
-        /// <summary>
-        /// ウィンドウタイトルキャプチャ処理
-        /// </summary>
-        /// <param name="windowTitle">ウィンドウタイトル</param>
-        /// <returns>true: 成功　/ false: 失敗</returns>
-        private bool CaptureWindowByTitle(string windowTitle)
-        {
-            if (string.IsNullOrWhiteSpace(windowTitle))
-            {
-                ShowErrorDialog("ウィンドウタイトルを入力してください。");
-                return false;
-            }
-
-            IntPtr hWnd = FindWindowByTitle(windowTitle);
-            if (hWnd == IntPtr.Zero)
-            {
-                ShowErrorDialog("指定されたウィンドウが見つかりません。");
-                return false;
-            }
-
-            // ウィンドウの位置とサイズを取得
-            if (GetWindowRect(hWnd, out RECT rect) == false)
-            {
-                ShowErrorDialog("ウィンドウの位置を取得できませんでした。");
-                return false;
-            }
-
-            // RECTから幅と高さを計算
-            int width = rect.Right - rect.Left;
-            int height = rect.Bottom - rect.Top;
-
-            // ウィンドウ全体のビットマップを作成
-            Bitmap bitmap = CaptureWindow(hWnd, width, height);
-            return SaveCaptureImage(bitmap);
-        }
-
-        /// <summary>
-        /// ウィンドウをキャプチャーしたBitmapを生成
-        /// </summary>
-        /// <param name="hWnd">ウィンドウハンドル</param>
-        /// <param name="width">幅</param>
-        /// <param name="height">高さ</param>
-        /// <returns>Bitmap</returns>
-        private Bitmap CaptureWindow(IntPtr hWnd, int width, int height)
-        {
-            const int SRCCOPY = 0x00CC0020;
-
-            // ウィンドウのDCを取得
-            IntPtr hdcWindow = GetDC(hWnd);
-            IntPtr hdcMemDC = CreateCompatibleDC(hdcWindow);
-
-            // ウィンドウのビットマップを作成
-            IntPtr hBitmap = CreateCompatibleBitmap(hdcWindow, width, height);
-            IntPtr hOld = SelectObject(hdcMemDC, hBitmap);
-
-            // ウィンドウのビットブロック転送 (BitBlt) を実行
-            BitBlt(hdcMemDC, 0, 0, width, height, hdcWindow, 0, 0, SRCCOPY);
-
-            // ビットマップを取得
-            Bitmap bmp = Bitmap.FromHbitmap(hBitmap);
-
-            // リソース解放
-            SelectObject(hdcMemDC, hOld);
-            DeleteObject(hBitmap);
-            DeleteDC(hdcMemDC);
-
-            // ウィンドウのDCを解放
-            DeleteDC(hdcWindow);
-
-            return bmp;
-        }
-
-        #endregion CaptureWindow
 
         #region Thumbnails
 
@@ -1005,13 +752,68 @@ namespace ScreenCaptureTool
 
         #endregion Private
 
+        #region Events(Menu)
+
+        /// <summary>
+        /// 開く：メニュー
+        /// </summary>
+        private void OnOpenProjectMenu_Clicked(object sender, RoutedEventArgs e)
+        {
+            // ダイアログでファイルを選択
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = "Screen Capture Project (*.scp)|*.scp";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LoadProjectFile(openFileDialog.FileName);
+            }
+        }
+
+        /// <summary>
+        /// 上書き保存：メニュー
+        /// </summary>
+
+        private void OnSaveProjectMenu_Clicked(object sender, RoutedEventArgs e)
+        {
+            if (projectSettings.FilePath != null)
+            {
+                SaveProjectFile(projectSettings);
+            }
+            else
+            {
+                OnSaveAsProjectMenu_Clicked(sender, e);
+            }
+        }
+
+        /// <summary>
+        /// 名前を付けて保存：メニュー
+        /// </summary>
+        private void OnSaveAsProjectMenu_Clicked(object sender, RoutedEventArgs e)
+        {
+            // ダイアログで保存先を指定
+            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+            saveFileDialog.Filter = "Screen Capture Project (*.scp)|*.scp";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                projectSettings.FilePath = saveFileDialog.FileName;
+                SaveProjectFile(projectSettings);
+            }
+        }
+
+        /// <summary>
+        /// 終了：メニュー
+        /// </summary>
+        private void OnExitMenu_Clicked(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        #endregion Events(Menu)
+
         #region Events(Control)
 
         /// <summary>
         /// フォルダ選択ボタン：押下
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void SelectFolderButton_Click(object sender, RoutedEventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
@@ -1026,8 +828,6 @@ namespace ScreenCaptureTool
         /// <summary>
         /// キャプチャー選択ラジオボタン：選択が変更された
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void CaptureOption_CheckedChanged(object sender, RoutedEventArgs e)
         {
             // 矩形キャプチャーが選ばれている場合、矩形入力パネルを表示
@@ -1046,8 +846,6 @@ namespace ScreenCaptureTool
         /// <summary>
         /// サムネイルサイズ変更のコンボボックス：選択変更
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void ThumbnailSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ThumbnailSizeComboBox.SelectedItem is ComboBoxItem selectedItem)
@@ -1061,28 +859,39 @@ namespace ScreenCaptureTool
         /// <summary>
         /// 撮影ボタン：押下
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
+            CaptureItem? captureItem = null;
+
             // ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
             if (CaptureRectRadioButton.IsChecked == true)
             {
                 // 矩形キャプチャ処理
-                CaptureScreenRect();
+                captureItem = new ScreenRectCaptureItem(int.Parse(CaptureLeftTextBox.Text),
+                                                        int.Parse(CaptureTopTextBox.Text),
+                                                        int.Parse(CaptureWidthTextBox.Text),
+                                                        int.Parse(CaptureHeightTextBox.Text));
             }
             else if (CaptureWindowRadioButton.IsChecked == true)
             {
                 // ウィンドウタイトルキャプチャ処理
-                CaptureWindowByTitle(WindowTitleTextBox.Text);
+                captureItem = new WindowTitleCaptureItem(WindowTitleTextBox.Text);
+            }
+
+            // キャプチャ処理
+            if (captureItem != null)
+            {
+                var bitmap = captureItem.Capture();
+                if (bitmap != null)
+                {
+                    SaveCaptureImage(bitmap);
+                }
             }
         }
 
         /// <summary>
         /// サムネイル画像：左クリック
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Thumbnail_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             // ダブルクリックかどうかを確認
@@ -1097,7 +906,7 @@ namespace ScreenCaptureTool
                     if (selectedImageFile != null)
                     {
                         // フルパスをProcess.Startに渡す
-                        string fullPath = System.IO.Path.Combine(saveFolderPath, selectedImageFile.FileName);
+                        string fullPath = Path.Combine(saveFolderPath, selectedImageFile.FileName);
 
                         // フォトアプリで画像を開く
                         Process.Start(new ProcessStartInfo(fullPath)
@@ -1112,12 +921,11 @@ namespace ScreenCaptureTool
         /// <summary>
         /// 削除メニュー：選択
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
         {
             // 選択されたサムネイルを取得
             var menuItem = sender as MenuItem;
+            if (menuItem == null) return;
             var imageFile = menuItem.DataContext as ImageFile;
 
             if (imageFile == null) return;

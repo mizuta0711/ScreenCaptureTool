@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 using System.Windows.Media.Imaging;
 
-namespace ScreenCaptureTool
+namespace ScreenCaptureTool.Models
 {
     /// <summary>
     /// 画像ファイル情報を保持するクラス

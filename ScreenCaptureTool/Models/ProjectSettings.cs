@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Windows.Media.Media3D;
 using System.Xml.Serialization;
 
-namespace ScreenCaptureTool
+namespace ScreenCaptureTool.Models
 {
     /// <summary>
     /// プロジェクトの設定を保持するクラス
@@ -12,11 +11,17 @@ namespace ScreenCaptureTool
     [Serializable]
     public class ProjectSettings
     {
+        #region Enum
+
         public enum CaptureType
         {
             ScreenRect,     // 画面の矩形
             Window          // ウィンドウ
         }
+
+        #endregion Enum
+
+        #region Properties
 
         /// <summary>
         /// プロジェクトファイルのパス
@@ -76,17 +81,21 @@ namespace ScreenCaptureTool
         /// <summary>
         /// サムネイル画像サイズ
         /// </summary>
-        public int ThumbnailSize { get; set; } = 200;  // デフォルトサイズ
+        public int ThumbnailSize { get; set; }
 
         /// <summary>
         /// 保存ファイル名の一覧
         /// </summary>
-        public ObservableCollection<string> SaveFileNames = new ObservableCollection<string>();
+        public ObservableCollection<string> SaveFileNames;
 
         /// <summary>
         /// 画像保存先フォルダ
         /// </summary>
         public string SaveFolderPath { get; set; }
+
+        #endregion Properties
+
+        #region Constructor
 
         /// <summary>
         /// デフォルトコンストラクタ
@@ -105,10 +114,18 @@ namespace ScreenCaptureTool
             CaptureHeight = 1280;
             CaptureWindowTitle = "";
 
+            ThumbnailSize = 200;
             SaveFolderPath = Environment.CurrentDirectory;
+            SaveFileNames = new ObservableCollection<string>();
 
             FilePath = Path.Combine(Environment.CurrentDirectory, "ScreenCaptureTool.scp");
         }
+
+        #endregion Constructor
+
+        #region Methods
+
+        #region Methods(Public)
 
         /// <summary>
         /// ファイルに保存する
@@ -132,6 +149,10 @@ namespace ScreenCaptureTool
                 return false;
             }
         }
+
+        #endregion Methods(Public)
+
+        #region Methods(Static)
 
         /// <summary>
         /// ファイルから設定を読み込む
@@ -159,5 +180,9 @@ namespace ScreenCaptureTool
             }
             return null;
         }
+
+        #endregion Methods(Static)
+
+        #endregion Methods
     }
 }
