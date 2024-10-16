@@ -97,9 +97,9 @@ namespace ScreenCaptureTool
         private string saveFolderPath = Path.Combine(Environment.CurrentDirectory, "CapturedImages");
 
         /// <summary>
-        /// アプリケーション設定を保存する XML ファイル名
+        /// 現在のプロジェクト設定
         /// </summary>
-        private const string SettingsFilePath = "settings.xml";
+        private ProjectSettings projectSettings = new ProjectSettings();
 
         #endregion Variable
 
@@ -122,8 +122,8 @@ namespace ScreenCaptureTool
             // フォルダツリーの初期化
             InitializeFolderTree();
 
-            // 設定を読み込む
-            LoadSettings();
+            // プロジェクトファイルを読み込む
+            LoadProjectFile(projectSettings.FilePath);
         }
 
         #endregion Constructor
@@ -139,7 +139,9 @@ namespace ScreenCaptureTool
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
-            SaveSettings();
+
+            // プロジェクトファイルを保存
+            SaveProjectFile(projectSettings);
         }
 
         #endregion Events(Window)
@@ -149,71 +151,53 @@ namespace ScreenCaptureTool
         #region Settings
 
         /// <summary>
-        /// アプリケーション設定をXMLファイルから読み込む
+        /// プロジェクト設定をUIに反映
         /// </summary>
-        private void LoadSettings()
+        /// <param name="settings">プロジェクト設定</param>
+        private void LoadProjectSettings(ProjectSettings settings)
         {
-            if (File.Exists(SettingsFilePath))
+            // キャプチャー範囲
+            CaptureLeftTextBox.Text = settings.CaptureLeft.ToString();
+            CaptureTopTextBox.Text = settings.CaptureTop.ToString();
+            CaptureWidthTextBox.Text = settings.CaptureWidth.ToString();
+            CaptureHeightTextBox.Text = settings.CaptureHeight.ToString();
+
+            // サムネイルサイズ
+            if (settings.ThumbnailSize > 0)
             {
-                try
-                {
-                    XmlSerializer serializer = new XmlSerializer(typeof(AppSettings));
-                    using (FileStream fs = new FileStream(SettingsFilePath, FileMode.Open))
-                    {
-                        AppSettings? settings = (AppSettings?)serializer.Deserialize(fs);
-
-                        if (settings != null)
-                        {
-                            // キャプチャー範囲
-                            CaptureLeftTextBox.Text = settings.CaptureLeft.ToString();
-                            CaptureTopTextBox.Text = settings.CaptureTop.ToString();
-                            CaptureWidthTextBox.Text = settings.CaptureWidth.ToString();
-                            CaptureHeightTextBox.Text = settings.CaptureHeight.ToString();
-
-                            // サムネイルサイズ
-                            if (settings.ThumbnailSize > 0)
-                            {
-                                thumbnailSize = settings.ThumbnailSize;
-                            }
-
-                            // ウィンドウの位置とサイズを設定
-                            if (settings.WindowTop >= 0 && settings.WindowLeft >= 0)
-                            {
-                                Top = settings.WindowTop;
-                                Left = settings.WindowLeft;
-                            }
-                            if (settings.WindowWidth > 0 && settings.WindowHeight > 0)
-                            {
-                                Width = settings.WindowWidth;
-                                Height = settings.WindowHeight;
-                            }
-
-                            // ウィンドウタイトルを復元
-                            WindowTitleTextBox.Text = settings.CaptureWindowTitle;
-
-                            // チャプチャータイプを復元
-                            if (settings.SelectedCaptureType == AppSettings.CaptureType.ScreenRect)
-                            {
-                                CaptureRectRadioButton.IsChecked = true;
-                            }
-                            else
-                            {
-                                CaptureWindowRadioButton.IsChecked = true;
-                            }
-
-                            // 保存ファイル名一覧
-                            SaveFileNames = settings.SaveFileNames;
-
-                            // 保存先フォルダ
-                            saveFolderPath = settings.SaveFolderPath;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ShowErrorDialog("設定ファイルの読み込みに失敗しました: " + ex.Message);
-                }
+                thumbnailSize = settings.ThumbnailSize;
             }
+
+            // ウィンドウの位置とサイズを設定
+            if (settings.WindowTop >= 0 && settings.WindowLeft >= 0)
+            {
+                Top = settings.WindowTop;
+                Left = settings.WindowLeft;
+            }
+            if (settings.WindowWidth > 0 && settings.WindowHeight > 0)
+            {
+                Width = settings.WindowWidth;
+                Height = settings.WindowHeight;
+            }
+
+            // ウィンドウタイトルを復元
+            WindowTitleTextBox.Text = settings.CaptureWindowTitle;
+
+            // チャプチャータイプを復元
+            if (settings.SelectedCaptureType == ProjectSettings.CaptureType.ScreenRect)
+            {
+                CaptureRectRadioButton.IsChecked = true;
+            }
+            else
+            {
+                CaptureWindowRadioButton.IsChecked = true;
+            }
+
+            // 保存ファイル名一覧
+            SaveFileNames = settings.SaveFileNames;
+
+            // 保存先フォルダ
+            saveFolderPath = settings.SaveFolderPath;
 
             // UIに反映
             // 保存先フォルダ名
@@ -227,43 +211,105 @@ namespace ScreenCaptureTool
         }
 
         /// <summary>
-        /// アプリケーション設定をXMLファイルに保存する
+        /// UIの設定をプロジェクト設定に保存する
         /// </summary>
-        private void SaveSettings()
+        /// <param name="settings">プロジェクト設定</param>
+        private void StoreProjectSettings(ProjectSettings settings)
         {
-            try
-            {
-                AppSettings settings = new AppSettings();
-                // ウィンドウの位置とサイズ
-                settings.WindowTop = Top;
-                settings.WindowLeft = Left;
-                settings.WindowWidth = Width;
-                settings.WindowHeight = Height;
-                // キャプチャー範囲
-                settings.CaptureLeft = int.TryParse(CaptureLeftTextBox.Text, out var x) ? x : 0;
-                settings.CaptureTop = int.TryParse(CaptureTopTextBox.Text, out var y) ? y : 0;
-                settings.CaptureWidth = int.TryParse(CaptureWidthTextBox.Text, out var width) ? width : 0;
-                settings.CaptureHeight = int.TryParse(CaptureHeightTextBox.Text, out var height) ? height : 0;
-                // キャプチャーウィンドウタイトル
-                settings.CaptureWindowTitle = WindowTitleTextBox.Text;
-                // チャプチャータイプ
-                settings.SelectedCaptureType = (CaptureRectRadioButton.IsChecked ?? true) ? AppSettings.CaptureType.ScreenRect : AppSettings.CaptureType.Window;
-                // サムネイルサイズ
-                settings.ThumbnailSize = thumbnailSize;
-                // 保存ファイル名一覧
-                settings.SaveFileNames = SaveFileNames;
-                // 保存先フォルダ
-                settings.SaveFolderPath = saveFolderPath;
+            // ウィンドウの位置とサイズ
+            settings.WindowTop = Top;
+            settings.WindowLeft = Left;
+            settings.WindowWidth = Width;
+            settings.WindowHeight = Height;
+            // キャプチャー範囲
+            settings.CaptureLeft = int.TryParse(CaptureLeftTextBox.Text, out var x) ? x : 0;
+            settings.CaptureTop = int.TryParse(CaptureTopTextBox.Text, out var y) ? y : 0;
+            settings.CaptureWidth = int.TryParse(CaptureWidthTextBox.Text, out var width) ? width : 0;
+            settings.CaptureHeight = int.TryParse(CaptureHeightTextBox.Text, out var height) ? height : 0;
+            // キャプチャーウィンドウタイトル
+            settings.CaptureWindowTitle = WindowTitleTextBox.Text;
+            // チャプチャータイプ
+            settings.SelectedCaptureType = (CaptureRectRadioButton.IsChecked ?? true) ? ProjectSettings.CaptureType.ScreenRect : ProjectSettings.CaptureType.Window;
+            // サムネイルサイズ
+            settings.ThumbnailSize = thumbnailSize;
+            // 保存ファイル名一覧
+            settings.SaveFileNames = SaveFileNames;
+            // 保存先フォルダ
+            settings.SaveFolderPath = saveFolderPath;
+        }
 
-                XmlSerializer serializer = new XmlSerializer(typeof(AppSettings));
-                using (FileStream fs = new FileStream(SettingsFilePath, FileMode.Create))
-                {
-                    serializer.Serialize(fs, settings);
-                }
-            }
-            catch (Exception ex)
+        /// <summary>
+        /// プロジェクト設定をファイルから読み込む
+        /// </summary>
+        /// <param name="filePath">ファイルパス</param>
+        /// <returns>true: 成功 / false: 失敗</returns>
+        private bool LoadProjectFile(string filePath)
+        {
+            if (!File.Exists(filePath))
             {
-                ShowErrorDialog("設定ファイルの保存に失敗しました: " + ex.Message);
+                ShowErrorDialog("指定されたプロジェクトファイルが見つかりません: " + filePath);
+                return false;
+            }
+
+            var settings = ProjectSettings.Load(filePath);
+            if (settings == null)
+            {
+                ShowErrorDialog("設定ファイルの読み込みに失敗しました");
+                return false;
+            }
+
+            // プロジェクト設定をUIに反映
+            projectSettings = settings;
+            LoadProjectSettings(projectSettings);
+            return true;
+        }
+
+        /// <summary>
+        /// プロジェクト設定をファイルに保存する
+        /// </summary>
+        /// <param name="settings">プロジェクト設定</param>
+        /// <returns>true: 成功 / false: 失敗</returns>
+        private bool SaveProjectFile(ProjectSettings settings)
+        {
+            // UIの設定をプロジェクト設定に反映
+            StoreProjectSettings(settings);
+
+            // ファイルパスが未設定の場合はカレントディレクトリに保存
+            if (settings.FilePath == null)
+            {
+                settings.FilePath = Path.Combine(Environment.CurrentDirectory, "ScreenCaptureTool.ssp");
+            }
+
+            // ファイルに保存
+            if (settings.Save(settings.FilePath) == false)
+            {
+                ShowErrorDialog("設定ファイルの保存に失敗しました");
+                return false;
+            }
+
+            return true;
+        }
+
+        private void LoadProjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            // ダイアログでファイルを選択
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = "Screen Capture Project (*.scp)|*.scp";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LoadProjectFile(openFileDialog.FileName);
+            }
+        }
+
+        private void SaveAsProjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            // ダイアログで保存先を指定
+            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+            saveFileDialog.Filter = "Screen Capture Project (*.scp)|*.scp";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                projectSettings.FilePath = saveFileDialog.FileName;
+                SaveProjectFile(projectSettings);
             }
         }
 
@@ -555,9 +601,6 @@ namespace ScreenCaptureTool
             {
                 SaveFileNames.Add(selectedFileName);
             }
-
-            // 設定を保存
-            SaveSettings();
 
             return true;
         }
@@ -884,9 +927,6 @@ namespace ScreenCaptureTool
 
             // 選択されたフォルダの一覧を表示
             LoadImagesFromFolder();
-
-            // 設定を保存
-            SaveSettings();
 
             // 選択されたフォルダのツリー更新
             RefreshSelectedFolderTree();
