@@ -17,6 +17,7 @@ using Microsoft.VisualBasic.FileIO;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using MessageBox = System.Windows.MessageBox;
 using System.Text;
+using Microsoft.Win32;
 
 namespace ScreenCaptureTool
 {
@@ -290,7 +291,14 @@ namespace ScreenCaptureTool
             return true;
         }
 
-        private void LoadProjectButton_Click(object sender, RoutedEventArgs e)
+        #endregion Settings
+
+        #region MenuEventHandlers
+
+        /// <summary>
+        /// 開く：メニュー
+        /// </summary>
+        private void OnOpenProjectMenu_Clicked(object sender, RoutedEventArgs e)
         {
             // ダイアログでファイルを選択
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
@@ -301,7 +309,26 @@ namespace ScreenCaptureTool
             }
         }
 
-        private void SaveAsProjectButton_Click(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// 上書き保存：メニュー
+        /// </summary>
+
+        private void OnSaveProjectMenu_Clicked(object sender, RoutedEventArgs e)
+        {
+            if (projectSettings.FilePath != null)
+            {
+                SaveProjectFile(projectSettings);
+            }
+            else
+            {
+                OnSaveAsProjectMenu_Clicked(sender, e);
+            }
+        }
+
+        /// <summary>
+        /// 名前を付けて保存：メニュー
+        /// </summary>
+        private void OnSaveAsProjectMenu_Clicked(object sender, RoutedEventArgs e)
         {
             // ダイアログで保存先を指定
             Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
@@ -313,7 +340,15 @@ namespace ScreenCaptureTool
             }
         }
 
-        #endregion Settings
+        /// <summary>
+        /// 終了：メニュー
+        /// </summary>
+        private void OnExitMenu_Clicked(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        #endregion MenuEventHandlers
 
         #region Utility
 
