@@ -80,7 +80,6 @@ namespace ScreenCaptureTool
         /// <summary>
         /// ウィンドウが閉じられた：ウィンドウの位置とサイズを保存する
         /// </summary>
-        /// <param name="e"></param>
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
