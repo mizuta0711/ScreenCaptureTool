@@ -1,15 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ScreenCaptureTool.Models.CaptureItem;
 
-namespace ScreenCaptureTool.Controllers.CaptureOperation
+using System.Drawing;
+
+namespace ScreenCaptureTool.Controllers.CaptureProvider
 {
     /// <summary>
     /// 画面固定矩形キャプチャー機能
     /// </summary>
-    internal class ScreenRectCaptureProvider
+    public class ScreenRectCaptureProvider : CaptureProvider
     {
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="item">キャプチャーアイテム</param>
+        public ScreenRectCaptureProvider(CaptureItem item) : base(item)
+        {
+        }
     }
 }

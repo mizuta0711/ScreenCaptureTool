@@ -8,7 +8,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// キャプチャーアイテム
     /// </summary>
     [Serializable]
-    internal abstract class CaptureItem
+    public abstract class CaptureItem
     {
         #region Properties
 

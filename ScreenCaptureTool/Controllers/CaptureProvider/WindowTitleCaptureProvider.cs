@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ScreenCaptureTool.Models.CaptureItem;
 
-namespace ScreenCaptureTool.Controllers.CaptureOperation
+namespace ScreenCaptureTool.Controllers.CaptureProvider
 {
     /// <summary>
     /// ウィンドウタイトル指定のキャプチャー機能
     /// </summary>
-    internal class WindowTitleCaptureProvider
+    public class WindowTitleCaptureProvider : CaptureProvider
     {
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="item">キャプチャーアイテム</param>
+        public WindowTitleCaptureProvider(CaptureItem item) : base(item)
+        {
+        }
     }
 }

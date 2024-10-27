@@ -13,12 +13,12 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// ファイル名
         /// </summary>
-        public string FileName { get; set; }
+        private string fileName;
 
         /// <summary>
         /// 画像イメージ
         /// </summary>
-        public BitmapImage Thumbnail { get; set; }
+        private BitmapImage thumbnail;
 
         /// <summary>
         /// サムネイル画像：幅
@@ -38,6 +38,38 @@ namespace ScreenCaptureTool.Models
         #endregion Variables
 
         #region Properties
+
+        /// <summary>
+        /// ファイル名
+        /// </summary>
+        public string FileName
+        {
+            get => fileName;
+            set
+            {
+                if (fileName != value)
+                {
+                    fileName = value;
+                    OnPropertyChanged(nameof(FileName));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 画像イメージ
+        /// </summary>
+        public BitmapImage Thumbnail
+        {
+            get => thumbnail;
+            set
+            {
+                if (thumbnail != value)
+                {
+                    thumbnail = value;
+                    OnPropertyChanged(nameof(Thumbnail));
+                }
+            }
+        }
 
         /// <summary>
         /// サムネイル画像：幅

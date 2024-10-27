@@ -9,14 +9,14 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// ウィンドウタイトルキャプチャーアイテム
     /// </summary>
     [Serializable]
-    internal class WindowTitleCaptureItem : CaptureItem
+    public class WindowTitleCaptureItem : CaptureItem
     {
         #region Properties
 
         /// <summary>
         /// キャプチャーするウィンドウタイトル
         /// </summary>
-        public string WindowTitle { get; set; }
+        public string TargetWindowTitle { get; private set; }
 
         #endregion Properties
 
@@ -28,7 +28,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <param name="windowTitle">ウィンドウタイトル</param>
         public WindowTitleCaptureItem(string windowTitle)
         {
-            WindowTitle = windowTitle;
+            TargetWindowTitle = windowTitle;
         }
 
         #endregion Constructor
@@ -44,13 +44,13 @@ namespace ScreenCaptureTool.Models.CaptureItem
         public override Bitmap? Capture()
         {
             // ウィンドウタイトルが空の場合はキャプチャーしない
-            if (string.IsNullOrWhiteSpace(WindowTitle))
+            if (string.IsNullOrWhiteSpace(TargetWindowTitle))
             {
                 return null;
             }
 
             // ウィンドウハンドルを取得
-            IntPtr hWnd = Win32API.FindWindowByTitle(WindowTitle);
+            IntPtr hWnd = Win32API.FindWindowByTitle(TargetWindowTitle);
             if (hWnd == IntPtr.Zero)
             {
                 return null;

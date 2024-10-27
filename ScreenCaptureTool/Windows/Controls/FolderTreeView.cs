@@ -5,7 +5,7 @@ using System.Windows.Controls;
 
 namespace ScreenCaptureTool.Windows.Controls
 {
-    internal class FolderTreeView : TreeView
+    public class FolderTreeView : TreeView
     {
         public FolderTreeView() : base()
         {
@@ -77,7 +77,7 @@ namespace ScreenCaptureTool.Windows.Controls
         /// <summary>
         /// フォルダを再探索してツリーを更新する
         /// </summary>
-        internal void RefreshSelectedFolderTree()
+        public void RefreshSelectedFolderTree()
         {
             var selectedItem = SelectedItem as TreeViewItem;
             if (selectedItem != null)
@@ -112,7 +112,7 @@ namespace ScreenCaptureTool.Windows.Controls
         /// 指定されたフォルダをツリーで選択する
         /// </summary>
         /// <param name="selectFolderPath">選択するフォルダ</param>
-        internal void SelectFolderInTree(string selectFolderPath)
+        public void SelectFolderInTree(string selectFolderPath)
         {
             string[] pathParts = selectFolderPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 

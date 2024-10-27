@@ -10,29 +10,14 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// 画面矩形キャプチャーアイテム
     /// </summary>
     [Serializable]
-    internal class ScreenRectCaptureItem : CaptureItem
+    public class ScreenRectCaptureItem : CaptureItem
     {
         #region Properties
 
         /// <summary>
-        /// キャプチャー範囲：X
+        /// キャプチャー範囲
         /// </summary>
-        public int Left { get; set; }
-
-        /// <summary>
-        /// キャプチャー範囲：Y
-        /// </summary>
-        public int Top { get; set; }
-
-        /// <summary>
-        /// キャプチャー範囲：幅
-        /// </summary>
-        public int Width { get; set; }
-
-        /// <summary>
-        /// キャプチャー範囲：高さ
-        /// </summary>
-        public int Height { get; set; }
+        public Rectangle TargetRect { get; set; }
 
         #endregion Properties
 
@@ -41,16 +26,29 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        /// <param name="left">X座標</param>
-        /// <param name="top">Y座標</param>
-        /// <param name="width">幅</param>
-        /// <param name="height">高さ</param>
+        /// <param name="left">キャプチャー範囲:X座標</param>
+        /// <param name="top">キャプチャー範囲:Y座標</param>
+        /// <param name="width">キャプチャー範囲:幅</param>
+        /// <param name="height">キャプチャー範囲:高さ</param>
         public ScreenRectCaptureItem(int left, int top, int width, int height)
         {
-            Left = left;
-            Top = top;
-            Width = width;
-            Height = height;
+            TargetRect = new Rectangle(left, top, width, height);
+        }
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="rect">キャプチャー範囲</param>
+        public ScreenRectCaptureItem(Rectangle rect) : this(rect.Left, rect.Top, rect.Width, rect.Height)
+        {
+        }
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="rect">キャプチャー範囲</param>
+        public ScreenRectCaptureItem(Rect rect) : this((int)Math.Floor(rect.Left), (int)Math.Floor(rect.Top), (int)Math.Floor(rect.Width), (int)Math.Floor(rect.Height))
+        {
         }
 
         #endregion Constructor
@@ -67,10 +65,10 @@ namespace ScreenCaptureTool.Models.CaptureItem
             int screenWidth = (int)SystemParameters.VirtualScreenWidth;
             int screenHeight = (int)SystemParameters.VirtualScreenHeight;
 
-            int x = Left;
-            int y = Top;
-            int width = Width;
-            int height = Height;
+            int x = TargetRect.Left;
+            int y = TargetRect.Top;
+            int width = TargetRect.Width;
+            int height = TargetRect.Height;
 
             // 矩形のサイズをチェックして調整
             if (x < 0 || y < 0 || width <= 0 || height <= 0 ||

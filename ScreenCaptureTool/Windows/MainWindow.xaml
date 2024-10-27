@@ -40,6 +40,7 @@
                     <TextBlock Text="キャプチャ方法:" VerticalAlignment="Center" Margin="0,0,10,0" />
                     <RadioButton x:Name="CaptureRectRadioButton" Content="矩形を指定" IsChecked="True" GroupName="CaptureOption"  VerticalAlignment="Center" />
                     <RadioButton x:Name="CaptureWindowRadioButton" Content="ウィンドウタイトル" GroupName="CaptureOption"  VerticalAlignment="Center" Margin="20,0,0,0" />
+                    <RadioButton x:Name="FreeRectRadioButton" Content="自由矩形" GroupName="CaptureOption"  VerticalAlignment="Center" Margin="20,0,0,0" />
 
                     <!-- サムネイルサイズ選択 -->
                     <TextBlock Text="サムネイルサイズ:" VerticalAlignment="Center" Margin="20,0,0,0" />

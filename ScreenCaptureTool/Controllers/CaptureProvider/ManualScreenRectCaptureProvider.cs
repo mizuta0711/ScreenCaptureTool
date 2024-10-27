@@ -1,15 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ScreenCaptureTool.Models.CaptureItem;
+using ScreenCaptureTool.Windows;
 
-namespace ScreenCaptureTool.Controllers.CaptureOperation
+using System.Drawing;
+
+namespace ScreenCaptureTool.Controllers.CaptureProvider
 {
     /// <summary>
     /// ユーザー指定の矩形範囲キャプチャー機能
     /// </summary>
-    internal class ManualScreenRectCaptureProvider
+    public class ManualScreenRectCaptureProvider : CaptureProvider
     {
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="item">キャプチャーアイテム</param>
+        public ManualScreenRectCaptureProvider(CaptureItem item) : base(item)
+        {
+        }
+
+        /// <summary>
+        /// キャプチャーを行う
+        /// </summary>
+        /// <returns>画像(失敗時はnull)</returns>
+        public override Bitmap? Capture()
+        {
+            var overlayWindow = new CaptureRectOverlayWindow();
+            if (overlayWindow.ShowDialog() == true)
+            {
+                // TODO: インスタンスを置き換えているが、矩形情報だけを更新するように変更する
+                // TODO: 画面の拡大率が反映されないので、キャプチャー時に拡大率を考慮するように変更する
+                CaptureItem = new ScreenRectCaptureItem(overlayWindow.SelectedRect);
+                return base.Capture();
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

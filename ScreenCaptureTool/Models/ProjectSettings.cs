@@ -15,8 +15,9 @@ namespace ScreenCaptureTool.Models
 
         public enum CaptureType
         {
-            ScreenRect,     // 画面の矩形
-            Window          // ウィンドウ
+            ScreenRect,     // 画面の指定矩形
+            Window,         // ウィンドウ
+            FreeRect        // 自由矩形
         }
 
         #endregion Enum

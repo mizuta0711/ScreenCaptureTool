@@ -15,6 +15,9 @@ using ScreenCaptureTool.Models;
 using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Utilities;
 using System.Windows.Input;
+using ScreenCaptureTool.Controllers.CaptureProvider;
+using static ScreenCaptureTool.Utilities.Win32API;
+using System.Collections.Specialized;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -64,6 +67,7 @@ namespace ScreenCaptureTool.Windows
             // ラジオボタンの選択によって表示するUIを切り替える
             CaptureRectRadioButton.Checked += CaptureOption_CheckedChanged;
             CaptureWindowRadioButton.Checked += CaptureOption_CheckedChanged;
+            FreeRectRadioButton.Checked += CaptureOption_CheckedChanged;
 
             // プロジェクトファイルを読み込む
             LoadProjectFile(projectSettings.FilePath);
@@ -467,7 +471,19 @@ namespace ScreenCaptureTool.Windows
                 // サムネル画像を読み込む
                 BitmapImage thumbnail = BitmapHelper.LoadBitmapImage(filePath);
 
-                // xamlでImageを記述 → imgSync
+                // 一覧に同じファイル名があれば更新、なければ追加
+                foreach (var imageFile in ImageFiles)
+                {
+                    if (imageFile.FileName == Path.GetFileName(filePath))
+                    {
+                        // 画像ファイル情報を更新
+                        imageFile.Thumbnail = thumbnail;
+                        imageFile.ThumbnailWidth = thumbnailSize;
+                        imageFile.ThumbnailHeight = thumbnailSize;
+                        return;
+                    }
+                }
+
                 // 画像ファイル情報をリストに追加
                 ImageFiles.Add(new ImageFile
                 {
@@ -629,6 +645,11 @@ namespace ScreenCaptureTool.Windows
                 RectCapturePanel.Visibility = Visibility.Collapsed;
                 WindowCapturePanel.Visibility = Visibility.Visible;
             }
+            else if (FreeRectRadioButton.IsChecked == true)
+            {
+                RectCapturePanel.Visibility = Visibility.Collapsed;
+                WindowCapturePanel.Visibility = Visibility.Collapsed;
+            }
         }
 
         /// <summary>
@@ -649,41 +670,37 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
-            //CaptureItem? captureItem = null;
+            CaptureItem? captureItem = null;
 
-            //// ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
-            //if (CaptureRectRadioButton.IsChecked == true)
-            //{
-            //    // 矩形キャプチャ処理
-            //    captureItem = new ScreenRectCaptureItem(int.Parse(CaptureLeftTextBox.Text),
-            //                                            int.Parse(CaptureTopTextBox.Text),
-            //                                            int.Parse(CaptureWidthTextBox.Text),
-            //                                            int.Parse(CaptureHeightTextBox.Text));
-            //}
-            //else if (CaptureWindowRadioButton.IsChecked == true)
-            //{
-            //    // ウィンドウタイトルキャプチャ処理
-            //    captureItem = new WindowTitleCaptureItem(WindowTitleTextBox.Text);
-            //}
-
-            //// キャプチャ処理
-            //if (captureItem != null)
-            //{
-            //    var bitmap = captureItem.Capture();
-            //    if (bitmap != null)
-            //    {
-            //        SaveCaptureImage(bitmap);
-            //    }
-            //}
-            var overlayWindow = new CaptureRectOverlayWindow();
-            if (overlayWindow.ShowDialog() == true)
+            // ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
+            if (CaptureRectRadioButton.IsChecked == true)
             {
-                Rect selectedArea = overlayWindow.SelectedRect;
-                MessageBox.Show($"選択範囲: {selectedArea}");
+                // 矩形キャプチャ処理
+                captureItem = new ScreenRectCaptureItem(int.Parse(CaptureLeftTextBox.Text),
+                                                        int.Parse(CaptureTopTextBox.Text),
+                                                        int.Parse(CaptureWidthTextBox.Text),
+                                                        int.Parse(CaptureHeightTextBox.Text));
             }
-            else
+            else if (CaptureWindowRadioButton.IsChecked == true)
             {
-                MessageBox.Show($"キャンセル");
+                // ウィンドウタイトルキャプチャ処理
+                captureItem = new WindowTitleCaptureItem(WindowTitleTextBox.Text);
+            }
+            else if (FreeRectRadioButton.IsChecked == true)
+            {
+                // マニュアル矩形キャプチャ処理
+                captureItem = new ManualScreenRectCaptureItem();
+            }
+
+            // キャプチャ処理
+            if (captureItem != null)
+            {
+                var provider = CaptureProviderFactory.InstantiateCaptureProvider(captureItem);
+                var bitmap = provider.Capture();
+                if (bitmap != null)
+                {
+                    SaveCaptureImage(bitmap);
+                }
             }
         }
 
