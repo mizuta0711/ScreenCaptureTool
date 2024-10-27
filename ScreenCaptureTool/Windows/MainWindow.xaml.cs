@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -15,6 +14,7 @@ using MessageBox = System.Windows.MessageBox;
 using ScreenCaptureTool.Models;
 using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Utilities;
+using System.Windows.Input;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -64,9 +64,6 @@ namespace ScreenCaptureTool.Windows
             // ラジオボタンの選択によって表示するUIを切り替える
             CaptureRectRadioButton.Checked += CaptureOption_CheckedChanged;
             CaptureWindowRadioButton.Checked += CaptureOption_CheckedChanged;
-
-            // フォルダツリーの初期化
-            InitializeFolderTree();
 
             // プロジェクトファイルを読み込む
             LoadProjectFile(projectSettings.FilePath);
@@ -152,7 +149,7 @@ namespace ScreenCaptureTool.Windows
             FileNameComboBox.ItemsSource = SaveFileNames;
 
             // 保存先フォルダをツリーから選択状態にする
-            SelectFolderInTree(saveFolderPath);
+            FolderTreeView.SelectFolderInTree(saveFolderPath);
         }
 
         /// <summary>
@@ -327,59 +324,6 @@ namespace ScreenCaptureTool.Windows
         }
 
         /// <summary>
-        /// BitmapをPNG形式で保存する
-        /// </summary>
-        /// <param name="bitmap">Bitmap</param>
-        /// <param name="filePath">保存先のパス</param>
-        /// <returns>true: 保存 / false: 失敗</returns>
-        private bool SaveBitmapAsPng(Bitmap bitmap, string filePath)
-        {
-            // フォルダが存在しない場合は作成する
-            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
-            {
-                if (Path.GetDirectoryName(filePath) is string parentFolderPath)
-                {
-                    Directory.CreateDirectory(parentFolderPath);
-                }
-            }
-
-            // ファイルが既に存在する場合、上書き確認ダイアログを表示
-            if (File.Exists(filePath))
-            {
-                var result = MessageBox.Show(
-                    "このファイルは既に存在します。上書きしますか？",
-                    "上書き確認",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.No)
-                {
-                    // 上書きをキャンセル
-                    return false;
-                }
-
-                // 既存ファイルを削除
-                if (DeleteImageFile(filePath) == false)
-                {
-                    // 上書きをキャンセル
-                    return false;
-                }
-            }
-
-            // PNGとして保存
-            try
-            {
-                bitmap.Save(filePath, ImageFormat.Png);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ShowErrorDialog("ファイルの保存に失敗しました: " + ex.Message);
-                return false;
-            }
-        }
-
-        /// <summary>
         /// 画像ファイルを削除(ゴミ箱に移動)
         /// ※サムネイル一覧も更新する
         /// </summary>
@@ -451,23 +395,31 @@ namespace ScreenCaptureTool.Windows
                 return false;
             }
 
-            // PNGで保存
-            string filePath = CreateFilePath(saveFolderPath, selectedFileName);
-            if (SaveBitmapAsPng(bitmap, filePath) == false)
+            try
             {
+                // PNGで保存
+                string filePath = CreateFilePath(saveFolderPath, selectedFileName);
+                if (BitmapHelper.SaveBitmapAsPng(bitmap, filePath) == false)
+                {
+                    return false;
+                }
+
+                // サムネイルリストを更新
+                AddImageToList(filePath);
+
+                // 新しいファイル名をComboBoxのリストに追加
+                if (!FileNameComboBox.Items.Contains(selectedFileName))
+                {
+                    SaveFileNames.Add(selectedFileName);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ShowErrorDialog("画像の保存に失敗しました: " + ex.Message);
                 return false;
             }
-
-            // サムネイルリストを更新
-            AddImageToList(filePath);
-
-            // 新しいファイル名をComboBoxのリストに追加
-            if (!FileNameComboBox.Items.Contains(selectedFileName))
-            {
-                SaveFileNames.Add(selectedFileName);
-            }
-
-            return true;
         }
 
         #endregion CaptureTools
@@ -481,6 +433,10 @@ namespace ScreenCaptureTool.Windows
         {
             ImageFiles.Clear();
 
+            // カーソルを待機中に変更
+            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+
+            // TODO: 非同期処理にリファクタリングする
             if (Directory.Exists(saveFolderPath))
             {
                 var files = Directory.GetFiles(saveFolderPath, "*.png");
@@ -489,6 +445,9 @@ namespace ScreenCaptureTool.Windows
                     AddImageToList(file);
                 }
             }
+
+            // カーソルを元に戻す
+            Mouse.OverrideCursor = null;
         }
 
         /// <summary>
@@ -539,104 +498,7 @@ namespace ScreenCaptureTool.Windows
 
         #endregion Thumbnails
 
-        #region FolderTree
-
-        // フォルダツリーを初期化する
-        private void InitializeFolderTree()
-        {
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                if (drive.IsReady)
-                {
-                    var item = new TreeViewItem { Header = drive.Name, Tag = drive.Name };
-                    item.Items.Add(null);  // ダミーアイテム
-                    item.Expanded += Folder_Expanded;
-                    FolderTreeView.Items.Add(item);
-                }
-            }
-        }
-
-        // フォルダを展開したときの処理
-        private void Folder_Expanded(object sender, RoutedEventArgs e)
-        {
-            var item = (TreeViewItem)sender;
-            if (item.Items.Count == 1 && item.Items[0] == null)  // ダミーアイテムの確認
-            {
-                item.Items.Clear();
-                try
-                {
-                    var directories = Directory.GetDirectories(item.Tag.ToString());
-                    foreach (var directory in directories)
-                    {
-                        var subItem = new TreeViewItem { Header = Path.GetFileName(directory), Tag = directory };
-                        subItem.Items.Add(null);  // ダミーアイテム
-                        subItem.Expanded += Folder_Expanded;
-                        item.Items.Add(subItem);
-                    }
-                }
-                catch (UnauthorizedAccessException) { }
-            }
-        }
-
-        // フォルダツリーで選択が変更されたとき
-        private void FolderTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            var selectedItem = FolderTreeView.SelectedItem as TreeViewItem;
-            if (selectedItem != null)
-            {
-                if (selectedItem.Tag.ToString() is string folderPath)
-                {
-                    SelectCurrentFolder(folderPath);
-                }
-            }
-        }
-
-        // saveFolderPathのフォルダをツリーで選択する
-        private void SelectFolderInTree(string saveFolderPath)
-        {
-            string[] pathParts = saveFolderPath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-            TreeViewItem? currentItem = null;
-
-            foreach (TreeViewItem driveItem in FolderTreeView.Items)
-            {
-                if (driveItem.Tag.ToString() == pathParts[0] + Path.DirectorySeparatorChar) // ドライブ名の一致を確認
-                {
-                    currentItem = driveItem;
-                    currentItem.IsExpanded = true; // ドライブを展開
-                    break;
-                }
-            }
-
-            // ドライブが見つからない場合は終了
-            if (currentItem == null)
-            {
-                return;
-            }
-
-            // ドライブ以下のフォルダを順次展開していく
-            for (int i = 1; i < pathParts.Length; i++)
-            {
-                bool found = false;
-                foreach (TreeViewItem subItem in currentItem.Items)
-                {
-                    if (subItem.Header.ToString() == pathParts[i])
-                    {
-                        currentItem = subItem;
-                        currentItem.IsExpanded = true; // フォルダを展開
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found)
-                {
-                    return; // 見つからなければ終了
-                }
-            }
-
-            currentItem.IsSelected = true; // 最後のフォルダを選択
-        }
+        #region FolderTreeView
 
         /// <summary>
         /// カレントフォルダの変更
@@ -654,44 +516,10 @@ namespace ScreenCaptureTool.Windows
             LoadImagesFromFolder();
 
             // 選択されたフォルダのツリー更新
-            RefreshSelectedFolderTree();
+            FolderTreeView.RefreshSelectedFolderTree();
         }
 
-        /// <summary>
-        /// フォルダを再探索してツリーを更新する
-        /// </summary>
-        private void RefreshSelectedFolderTree()
-        {
-            var selectedItem = FolderTreeView.SelectedItem as TreeViewItem;
-            if (selectedItem != null)
-            {
-                // 現在選択されたフォルダの子要素をクリア
-                selectedItem.Items.Clear();
-
-                // 再度フォルダを展開し、ツリーに反映
-                try
-                {
-                    if (selectedItem.Tag.ToString() is string folderPath)
-                    {
-                        var directories = Directory.GetDirectories(folderPath);
-                        foreach (var directory in directories)
-                        {
-                            var subItem = new TreeViewItem { Header = Path.GetFileName(directory), Tag = directory };
-                            subItem.Items.Add(null);  // ダミーアイテム
-                            subItem.Expanded += Folder_Expanded;
-                            selectedItem.Items.Add(subItem);
-                        }
-                    }
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    // アクセスできないフォルダに対してのエラーハンドリング
-                    ShowErrorDialog("フォルダにアクセスできませんでした: " + ex.Message);
-                }
-            }
-        }
-
-        #endregion FolderTree
+        #endregion FolderTreeView
 
         #endregion Private
 
@@ -751,6 +579,23 @@ namespace ScreenCaptureTool.Windows
         }
 
         #endregion Events(Menu)
+
+        #region Events(FolderTreeView)
+
+        // フォルダツリーで選択が変更されたとき
+        private void FolderTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            var selectedItem = FolderTreeView.SelectedItem as TreeViewItem;
+            if (selectedItem != null)
+            {
+                if (selectedItem.Tag.ToString() is string folderPath)
+                {
+                    SelectCurrentFolder(folderPath);
+                }
+            }
+        }
+
+        #endregion Events(FolderTreeView)
 
         #region Events(Control)
 

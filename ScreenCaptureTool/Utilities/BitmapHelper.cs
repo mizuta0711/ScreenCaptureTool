@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 namespace ScreenCaptureTool.Utilities
@@ -13,8 +16,6 @@ namespace ScreenCaptureTool.Utilities
     /// </summary>
     internal class BitmapHelper
     {
-        #region BitmapUtility
-
         /// <summary>
         /// BitmapSourceからBitmapImageへの変換
         /// </summary>
@@ -68,6 +69,42 @@ namespace ScreenCaptureTool.Utilities
             }
         }
 
-        #endregion BitmapUtility
+        /// <summary>
+        /// BitmapをPNG形式で保存する
+        /// </summary>
+        /// <param name="bitmap">Bitmap</param>
+        /// <param name="filePath">保存先のパス</param>
+        /// <returns>true: 保存 / false: 失敗</returns>
+        internal static bool SaveBitmapAsPng(Bitmap bitmap, string filePath)
+        {
+            // フォルダが存在しない場合は作成する
+            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            {
+                if (Path.GetDirectoryName(filePath) is string parentFolderPath)
+                {
+                    Directory.CreateDirectory(parentFolderPath);
+                }
+            }
+
+            // ファイルが既に存在する場合、上書き確認ダイアログを表示
+            if (File.Exists(filePath))
+            {
+                var result = MessageBox.Show(
+                    "このファイルは既に存在します。上書きしますか？",
+                    "上書き確認",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.No)
+                {
+                    // 上書きをキャンセル
+                    return false;
+                }
+            }
+
+            // PNGとして保存
+            bitmap.Save(filePath, ImageFormat.Png);
+            return true;
+        }
     }
 }
