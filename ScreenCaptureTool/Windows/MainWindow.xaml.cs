@@ -14,8 +14,9 @@ using Microsoft.VisualBasic.FileIO;
 using MessageBox = System.Windows.MessageBox;
 using ScreenCaptureTool.Models;
 using ScreenCaptureTool.Models.CaptureItem;
+using ScreenCaptureTool.Utilities;
 
-namespace ScreenCaptureTool
+namespace ScreenCaptureTool.Windows
 {
     public partial class MainWindow : Window
     {
@@ -309,63 +310,6 @@ namespace ScreenCaptureTool
 
         #endregion Utility
 
-        #region BitmapUtility
-
-        /// <summary>
-        /// BitmapSourceからBitmapImageへの変換
-        /// </summary>
-        /// <param name="bitmapSource">BitmapSource</param>
-        /// <returns>変換後のBitmapImage</returns>
-        private static BitmapImage ConvertBitmapSourceToBitmapImage(BitmapSource bitmapSource)
-        {
-            // BitmapSourceをMemoryStreamに保存
-            using (MemoryStream memoryStream = new MemoryStream())
-            {
-                // BitmapEncoderでBitmapSourceをエンコード
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-                encoder.Save(memoryStream);
-
-                // MemoryStreamからBitmapImageを作成
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = new MemoryStream(memoryStream.ToArray());
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                return bitmapImage;
-            }
-        }
-
-        /// <summary>
-        /// 指定されたファイルをBitmapImage形式で読み込む
-        /// </summary>
-        /// <param name="filePath">パス</param>
-        /// <returns>BitmapImage</returns>
-        private static BitmapImage LoadBitmapImage(string filePath)
-        {
-            using (Stream stream = new FileStream(
-                filePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.ReadWrite | FileShare.Delete
-            ))
-            {
-                // ロックしないように指定したstreamを使用する。
-                BitmapDecoder decoder = BitmapDecoder.Create(
-                    stream,
-                    BitmapCreateOptions.None, // この辺のオプションは適宜
-                    BitmapCacheOption.Default // これも
-                );
-                BitmapSource bmp = new WriteableBitmap(decoder.Frames[0]);
-                bmp.Freeze();
-
-                // BitmapImage形式に変換して返す
-                return ConvertBitmapSourceToBitmapImage(bmp);
-            }
-        }
-
-        #endregion BitmapUtility
-
         #region CaptureTools
 
         /// <summary>
@@ -562,7 +506,7 @@ namespace ScreenCaptureTool
             try
             {
                 // サムネル画像を読み込む
-                BitmapImage thumbnail = LoadBitmapImage(filePath);
+                BitmapImage thumbnail = BitmapHelper.LoadBitmapImage(filePath);
 
                 // xamlでImageを記述 → imgSync
                 // 画像ファイル情報をリストに追加
@@ -860,31 +804,41 @@ namespace ScreenCaptureTool
         /// </summary>
         private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
-            CaptureItem? captureItem = null;
+            //CaptureItem? captureItem = null;
 
-            // ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
-            if (CaptureRectRadioButton.IsChecked == true)
-            {
-                // 矩形キャプチャ処理
-                captureItem = new ScreenRectCaptureItem(int.Parse(CaptureLeftTextBox.Text),
-                                                        int.Parse(CaptureTopTextBox.Text),
-                                                        int.Parse(CaptureWidthTextBox.Text),
-                                                        int.Parse(CaptureHeightTextBox.Text));
-            }
-            else if (CaptureWindowRadioButton.IsChecked == true)
-            {
-                // ウィンドウタイトルキャプチャ処理
-                captureItem = new WindowTitleCaptureItem(WindowTitleTextBox.Text);
-            }
+            //// ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
+            //if (CaptureRectRadioButton.IsChecked == true)
+            //{
+            //    // 矩形キャプチャ処理
+            //    captureItem = new ScreenRectCaptureItem(int.Parse(CaptureLeftTextBox.Text),
+            //                                            int.Parse(CaptureTopTextBox.Text),
+            //                                            int.Parse(CaptureWidthTextBox.Text),
+            //                                            int.Parse(CaptureHeightTextBox.Text));
+            //}
+            //else if (CaptureWindowRadioButton.IsChecked == true)
+            //{
+            //    // ウィンドウタイトルキャプチャ処理
+            //    captureItem = new WindowTitleCaptureItem(WindowTitleTextBox.Text);
+            //}
 
-            // キャプチャ処理
-            if (captureItem != null)
+            //// キャプチャ処理
+            //if (captureItem != null)
+            //{
+            //    var bitmap = captureItem.Capture();
+            //    if (bitmap != null)
+            //    {
+            //        SaveCaptureImage(bitmap);
+            //    }
+            //}
+            var overlayWindow = new CaptureRectOverlayWindow();
+            if (overlayWindow.ShowDialog() == true)
             {
-                var bitmap = captureItem.Capture();
-                if (bitmap != null)
-                {
-                    SaveCaptureImage(bitmap);
-                }
+                Rect selectedArea = overlayWindow.SelectedRect;
+                MessageBox.Show($"選択範囲: {selectedArea}");
+            }
+            else
+            {
+                MessageBox.Show($"キャンセル");
             }
         }
 

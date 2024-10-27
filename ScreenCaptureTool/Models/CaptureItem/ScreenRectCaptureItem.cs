@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows;
 
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
@@ -8,6 +9,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// <summary>
     /// 画面矩形キャプチャーアイテム
     /// </summary>
+    [Serializable]
     internal class ScreenRectCaptureItem : CaptureItem
     {
         #region Properties
