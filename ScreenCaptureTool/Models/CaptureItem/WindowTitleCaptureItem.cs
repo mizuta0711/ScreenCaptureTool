@@ -50,7 +50,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
             }
 
             // ウィンドウハンドルを取得
-            IntPtr hWnd = Win32API.FindWindowByTitle(TargetWindowTitle);
+            IntPtr hWnd = CaptureHelper.FindWindowByTitle(TargetWindowTitle);
             if (hWnd == IntPtr.Zero)
             {
                 return null;
@@ -67,7 +67,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
             int height = rect.Bottom - rect.Top;
 
             // ウィンドウ全体のビットマップを作成
-            return Win32API.CaptureWindow(hWnd, width, height);
+            return CaptureHelper.CaptureWindow(hWnd, width, height);
         }
 
         #endregion Methods(Override)

@@ -53,6 +53,25 @@ namespace ScreenCaptureTool.Models.CaptureItem
 
         #endregion Constructor
 
+        #region Methods
+
+        #region Methods(Protected)
+
+        /// <summary>
+        /// DPIスケールを取得
+        /// </summary>
+        /// <returns>DPIスケール</returns>
+        public static (float scaleX, float scaleY) GetDpiScale()
+        {
+            const int DisplayDPI = 96;
+            using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) // デスクトップの Graphics を取得
+            {
+                return (g.DpiX / DisplayDPI, g.DpiY / DisplayDPI);
+            }
+        }
+
+        #endregion Methods(Protected)
+
         #region Methods(Override)
 
         /// <summary>
@@ -61,21 +80,12 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <returns>true: 成功　/ false: 失敗</returns>
         public override Bitmap? Capture()
         {
-            // デスクトップの解像度を取得
-            int screenWidth = (int)SystemParameters.VirtualScreenWidth;
-            int screenHeight = (int)SystemParameters.VirtualScreenHeight;
+            var (scaleX, scaleY) = GetDpiScale();
 
-            int x = TargetRect.Left;
-            int y = TargetRect.Top;
-            int width = TargetRect.Width;
-            int height = TargetRect.Height;
-
-            // 矩形のサイズをチェックして調整
-            if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
-                x + width > screenWidth || y + height > screenHeight)
-            {
-                return null;
-            }
+            int x = (int)(TargetRect.Left * scaleX);
+            int y = (int)(TargetRect.Top * scaleY);
+            int width = (int)(TargetRect.Width * scaleX);
+            int height = (int)(TargetRect.Height * scaleY);
 
             // 矩形のビットマップを作成
             Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
@@ -87,5 +97,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
         }
 
         #endregion Methods(Override)
+
+        #endregion Methods
     }
 }

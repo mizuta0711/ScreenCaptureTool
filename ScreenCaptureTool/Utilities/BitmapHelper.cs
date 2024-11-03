@@ -16,6 +16,8 @@ namespace ScreenCaptureTool.Utilities
     /// </summary>
     internal class BitmapHelper
     {
+        #region Methods(Static)
+
         /// <summary>
         /// BitmapSourceからBitmapImageへの変換
         /// </summary>
@@ -106,5 +108,7 @@ namespace ScreenCaptureTool.Utilities
             bitmap.Save(filePath, ImageFormat.Png);
             return true;
         }
+
+        #endregion Methods(Static)
     }
 }
