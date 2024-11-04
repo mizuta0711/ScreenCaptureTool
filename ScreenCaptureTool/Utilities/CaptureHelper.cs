@@ -137,6 +137,19 @@ namespace ScreenCaptureTool.Utilities
             return (scale, scale);
         }
 
+        /// <summary>
+        /// DPIスケールを取得
+        /// </summary>
+        /// <returns>DPIスケール</returns>
+        internal static (float scaleX, float scaleY) GetDpiScale()
+        {
+            const int DisplayDPI = 96;
+            using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) // デスクトップの Graphics を取得
+            {
+                return (g.DpiX / DisplayDPI, g.DpiY / DisplayDPI);
+            }
+        }
+
         #endregion Methods(Static)
     }
 }

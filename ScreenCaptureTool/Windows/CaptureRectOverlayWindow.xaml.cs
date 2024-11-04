@@ -1,7 +1,11 @@
-﻿using System;
+﻿using ScreenCaptureTool.Utilities;
+
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Media3D;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -69,18 +73,29 @@ namespace ScreenCaptureTool.Windows
             if (isDragging)
             {
                 // 現在のマウス位置を取得し、矩形を更新
-                var pos = e.GetPosition(this);
-                var x = Math.Min(pos.X, startPoint.X);
-                var y = Math.Min(pos.Y, startPoint.Y);
-                var width = Math.Abs(pos.X - startPoint.X);
-                var height = Math.Abs(pos.Y - startPoint.Y);
-
-                // 矩形のサイズと位置を更新
-                Canvas.SetLeft(SelectionRectangle, x);
-                Canvas.SetTop(SelectionRectangle, y);
-                SelectionRectangle.Width = width;
-                SelectionRectangle.Height = height;
+                UpdateSelectionRectangle(startPoint, e.GetPosition(this));
             }
+        }
+
+        /// <summary>
+        /// 選択中矩形を更新
+        /// </summary>
+        /// <param name="start">ドラッグ開始位置</param>
+        /// <param name="end">ドラッグ終了位置</param>
+        /// <returns>スクリーン座標での矩形</returns>
+        private Rect UpdateSelectionRectangle(Point start, Point end)
+        {
+            var minPos = new Point(Math.Min(start.X, end.X), Math.Min(start.Y, end.Y));
+            var maxPos = new Point(Math.Max(start.X, end.X), Math.Max(start.Y, end.Y));
+
+            // 選択範囲矩形の位置とサイズを更新
+            Canvas.SetLeft(SelectionRectangle, minPos.X);
+            Canvas.SetTop(SelectionRectangle, minPos.Y);
+            SelectionRectangle.Width = maxPos.X - minPos.X + 1;
+            SelectionRectangle.Height = maxPos.Y - minPos.Y + 1;
+
+            // スクリーン座標に変換
+            return new Rect(this.PointToScreen(minPos), this.PointToScreen(maxPos));
         }
 
         /// <summary>
@@ -93,15 +108,12 @@ namespace ScreenCaptureTool.Windows
             if (isDragging)
             {
                 isDragging = false;
-                // 選択範囲を確定
-                var pos = e.GetPosition(this);
-                var x = Math.Min(pos.X, startPoint.X);
-                var y = Math.Min(pos.Y, startPoint.Y);
-                var width = Math.Abs(pos.X - startPoint.X);
-                var height = Math.Abs(pos.Y - startPoint.Y);
 
-                SelectedRect = new Rect(x, y, width, height);
-                DialogResult = true;  // ダイアログを閉じて結果を返す
+                // 選択範囲を確定
+                SelectedRect = UpdateSelectionRectangle(startPoint, e.GetPosition(this));
+
+                // ダイアログを閉じて結果を返す
+                DialogResult = true;
                 this.Close();
             }
         }

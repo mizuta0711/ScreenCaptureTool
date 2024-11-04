@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ScreenCaptureTool.Utilities;
+
+using System;
 using System.Drawing;
 using System.Windows;
 
@@ -55,23 +57,6 @@ namespace ScreenCaptureTool.Models.CaptureItem
 
         #region Methods
 
-        #region Methods(Protected)
-
-        /// <summary>
-        /// DPIスケールを取得
-        /// </summary>
-        /// <returns>DPIスケール</returns>
-        public static (float scaleX, float scaleY) GetDpiScale()
-        {
-            const int DisplayDPI = 96;
-            using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) // デスクトップの Graphics を取得
-            {
-                return (g.DpiX / DisplayDPI, g.DpiY / DisplayDPI);
-            }
-        }
-
-        #endregion Methods(Protected)
-
         #region Methods(Override)
 
         /// <summary>
@@ -80,8 +65,10 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <returns>true: 成功　/ false: 失敗</returns>
         public override Bitmap? Capture()
         {
-            var (scaleX, scaleY) = GetDpiScale();
-
+            // DPIを考慮してキャプチャー
+            //var (scaleX, scaleY) = CaptureHelper.GetDpiScale();
+            double scaleX = 1.0;
+            double scaleY = 1.0;
             int x = (int)(TargetRect.Left * scaleX);
             int y = (int)(TargetRect.Top * scaleY);
             int width = (int)(TargetRect.Width * scaleX);
