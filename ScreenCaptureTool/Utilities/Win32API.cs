@@ -34,10 +34,16 @@ namespace ScreenCaptureTool.Utilities
         internal delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
-        internal static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        internal static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
 
         [DllImport("user32.dll")]
         internal static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr GetWindowDC(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool ReleaseDC(IntPtr hWnd, IntPtr hDC);
 
         [DllImport("gdi32.dll")]
         internal static extern int BitBlt(IntPtr hdcDest, int xDest, int yDest, int wDest, int hDest, IntPtr hdcSrc, int xSrc, int ySrc, int rop);

@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+
+using static ScreenCaptureTool.Utilities.Win32API;
 
 namespace ScreenCaptureTool.Utilities
 {
@@ -20,6 +23,11 @@ namespace ScreenCaptureTool.Utilities
         /// </summary>
         private const int DefaultDpi = 96;
 
+        /// <summary>
+        /// ウィンドウタイトルの最大長
+        /// </summary>
+        private const int WindowTitleMaxLength = 256;
+
         #endregion Fields
 
         #region Methods(Static)
@@ -27,24 +35,49 @@ namespace ScreenCaptureTool.Utilities
         /// <summary>
         /// 部分一致でウィンドウを検索
         /// </summary>
-        /// <param name="partialTitle">ウィンドウ名</param>
+        /// <param name="title">ウィンドウタイトル</param>
+        /// <param name="isEqual">完全一致かどうか</param>
         /// <returns>ウィンドウハンドル(見つからなかった場合は0)</returns>
-        internal static IntPtr FindWindowByTitle(string partialTitle)
+        internal static IntPtr FindWindowByTitle(string title, bool isEqual = false)
         {
             IntPtr foundWindow = IntPtr.Zero;
 
-            Win32API.EnumWindows((hWnd, lParam) =>
+            Win32API.EnumWindows((Win32API.EnumWindowsProc)((hWnd, lParam) =>
             {
-                StringBuilder windowTitle = new StringBuilder(256);
-                Win32API.GetWindowText(hWnd, windowTitle, 256);
-
-                if (windowTitle.ToString().Contains(partialTitle, StringComparison.OrdinalIgnoreCase) && Win32API.IsWindowVisible(hWnd))
+                if (Win32API.IsWindowVisible(hWnd) == false)
                 {
-                    foundWindow = hWnd;
-                    return false; // ウィンドウが見つかったので列挙を終了
+                    return true; // 非表示のウィンドウは無視して続行
                 }
+
+                // ウィンドウタイトルを取得
+                StringBuilder windowTitle = new StringBuilder(WindowTitleMaxLength);
+                Win32API.GetWindowText(hWnd, windowTitle, WindowTitleMaxLength);
+                if (string.IsNullOrEmpty(windowTitle.ToString()))
+                {
+                    return true; // タイトルが空の場合は続行
+                }
+
+                if (isEqual)
+                {
+                    // 完全一致
+                    if (windowTitle.ToString().Equals(title, StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundWindow = hWnd;
+                        return false; // ウィンドウが見つかったので列挙を終了
+                    }
+                }
+                else
+                {
+                    // 部分一致
+                    if (windowTitle.ToString().Contains(title, StringComparison.OrdinalIgnoreCase))
+                    {
+                        foundWindow = hWnd;
+                        return false; // ウィンドウが見つかったので列挙を終了
+                    }
+                }
+
                 return true; // まだ見つかっていないので続行
-            }, IntPtr.Zero);
+            }), IntPtr.Zero);
 
             return foundWindow;
         }
@@ -58,31 +91,19 @@ namespace ScreenCaptureTool.Utilities
         /// <returns>Bitmap</returns>
         internal static Bitmap CaptureWindow(IntPtr hWnd, int width, int height)
         {
-            const int SRCCOPY = 0x00CC0020;
+            // ウィンドウのデバイスコンテキストを取得
+            IntPtr hWindowDC = Win32API.GetWindowDC(hWnd);
+            Bitmap bitmap = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                IntPtr hDC = g.GetHdc();
+                BitBlt(hDC, 0, 0, width, height, hWindowDC, 0, 0, (int)CopyPixelOperation.SourceCopy);
+                g.ReleaseHdc(hDC);
+            }
 
-            // ウィンドウのDCを取得
-            IntPtr hdcWindow = Win32API.GetDC(hWnd);
-            IntPtr hdcMemDC = Win32API.CreateCompatibleDC(hdcWindow);
-
-            // ウィンドウのビットマップを作成
-            IntPtr hBitmap = Win32API.CreateCompatibleBitmap(hdcWindow, width, height);
-            IntPtr hOld = Win32API.SelectObject(hdcMemDC, hBitmap);
-
-            // ウィンドウのビットブロック転送 (BitBlt) を実行
-            Win32API.BitBlt(hdcMemDC, 0, 0, width, height, hdcWindow, 0, 0, SRCCOPY);
-
-            // ビットマップを取得
-            Bitmap bmp = Image.FromHbitmap(hBitmap);
-
-            // リソース解放
-            Win32API.SelectObject(hdcMemDC, hOld);
-            Win32API.DeleteObject(hBitmap);
-            Win32API.DeleteDC(hdcMemDC);
-
-            // ウィンドウのDCを解放
-            Win32API.DeleteDC(hdcWindow);
-
-            return bmp;
+            // デバイスコンテキストの解放
+            Win32API.ReleaseDC(hWnd, hWindowDC);
+            return bitmap;
         }
 
         /// <summary>

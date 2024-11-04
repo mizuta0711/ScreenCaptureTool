@@ -65,20 +65,12 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <returns>true: 成功　/ false: 失敗</returns>
         public override Bitmap? Capture()
         {
-            // DPIを考慮してキャプチャー
-            //var (scaleX, scaleY) = CaptureHelper.GetDpiScale();
-            double scaleX = 1.0;
-            double scaleY = 1.0;
-            int x = (int)(TargetRect.Left * scaleX);
-            int y = (int)(TargetRect.Top * scaleY);
-            int width = (int)(TargetRect.Width * scaleX);
-            int height = (int)(TargetRect.Height * scaleY);
-
             // 矩形のビットマップを作成
-            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            Bitmap bitmap = new Bitmap(TargetRect.Width, TargetRect.Height, PixelFormat.Format32bppArgb);
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.CopyFromScreen(x, y, 0, 0, new System.Drawing.Size(width, height));
+                graphics.CopyFromScreen(TargetRect.Left, TargetRect.Top,
+                                        0, 0, new System.Drawing.Size(TargetRect.Width, TargetRect.Height));
             }
             return bitmap;
         }

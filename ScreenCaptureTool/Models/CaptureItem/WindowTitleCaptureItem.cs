@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 using ScreenCaptureTool.Utilities;
 
@@ -18,6 +19,11 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// </summary>
         public string TargetWindowTitle { get; private set; }
 
+        /// <summary>
+        /// ウィンドウのクライアント領域をキャプチャーするかどうか
+        /// </summary>
+        public bool UseDirectCapture { get; private set; } = false;
+
         #endregion Properties
 
         #region Constructor
@@ -26,9 +32,11 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// コンストラクタ
         /// </summary>
         /// <param name="windowTitle">ウィンドウタイトル</param>
-        public WindowTitleCaptureItem(string windowTitle)
+        /// <param name="useDirectCapture">ウィンドウのクライアント領域をキャプチャーするかどうか</param>
+        public WindowTitleCaptureItem(string windowTitle, bool useDirectCapture = false)
         {
             TargetWindowTitle = windowTitle;
+            UseDirectCapture = useDirectCapture;
         }
 
         #endregion Constructor
@@ -62,12 +70,24 @@ namespace ScreenCaptureTool.Models.CaptureItem
                 return null;
             }
 
-            // RECTから幅と高さを計算
-            int width = rect.Right - rect.Left;
-            int height = rect.Bottom - rect.Top;
-
-            // ウィンドウ全体のビットマップを作成
-            return CaptureHelper.CaptureWindow(hWnd, width, height);
+            // キャプチャー
+            int width = rect.Right - rect.Left + 1;
+            int height = rect.Bottom - rect.Top + 1;
+            if (UseDirectCapture)
+            {
+                // ウィンドウのクライアント領域をキャプチャー
+                return CaptureHelper.CaptureWindow(hWnd, width, height);
+            }
+            else
+            {
+                // ウィンドウ位置のスクリーンをキャプチャー
+                Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                using (Graphics graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.CopyFromScreen(rect.Left, rect.Top, 0, 0, new Size(width, height));
+                }
+                return bitmap;
+            }
         }
 
         #endregion Methods(Override)
