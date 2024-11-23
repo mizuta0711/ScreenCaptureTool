@@ -5,13 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="キャプチャー範囲指定ウィンドウ"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowState="Maximized" Topmost="True" ShowInTaskbar="False"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowState="Maximized"
+        Topmost="True"
+        ShowInTaskbar="False"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         MouseMove="Window_MouseMove"
         MouseLeftButtonUp="Window_MouseLeftButtonUp"
         PreviewKeyDown="Window_PreviewKeyDown">
-    <Canvas x:Name="OverlayCanvas" Background="#80000000">
-        <Rectangle x:Name="SelectionRectangle" Stroke="Red" StrokeThickness="2" Fill="#33FF0000" Visibility="Collapsed" />
+    <Canvas x:Name="OverlayCanvas"
+            Background="#80000000">
+        <Rectangle x:Name="SelectionRectangle"
+                Stroke="Red"
+                StrokeThickness="2"
+                Fill="#33FF0000"
+                Visibility="Collapsed"/>
     </Canvas>
 </Window>
