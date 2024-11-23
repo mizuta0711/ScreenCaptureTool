@@ -14,7 +14,7 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         /// コンストラクタ
         /// </summary>
         /// <param name="item">キャプチャーアイテム</param>
-        public ManualScreenRectCaptureProvider(CaptureItem item) : base(item)
+        public ManualScreenRectCaptureProvider(CaptureItemBase item) : base(item)
         {
         }
 

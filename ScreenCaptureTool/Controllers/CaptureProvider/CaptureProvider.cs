@@ -12,13 +12,13 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         /// <summary>
         /// キャプチャーアイテム
         /// </summary>
-        protected CaptureItem CaptureItem { set; get; }
+        protected CaptureItemBase CaptureItem { set; get; }
 
         /// <summary>
         /// コンストラクタ
         /// </summary>
         /// <param name="item">キャプチャーアイテム</param>
-        public CaptureProvider(CaptureItem item)
+        public CaptureProvider(CaptureItemBase item)
         {
             CaptureItem = item;
         }

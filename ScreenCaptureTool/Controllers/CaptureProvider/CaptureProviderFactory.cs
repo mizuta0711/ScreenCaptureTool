@@ -12,7 +12,7 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         /// <param name="captureItem">キャプチャーアイテム</param>
         /// <returns>キャプチャープロバイダー</returns>
         /// <exception cref="ArgumentException">対応していないアイテム</exception>
-        public static CaptureProvider InstantiateCaptureProvider(CaptureItem captureItem)
+        public static CaptureProvider InstantiateCaptureProvider(CaptureItemBase captureItem)
         {
             if (captureItem.GetType() == typeof(ScreenRectCaptureItem))
             {

@@ -10,7 +10,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// ウィンドウタイトルキャプチャーアイテム
     /// </summary>
     [Serializable]
-    public class WindowTitleCaptureItem : CaptureItem
+    public class WindowTitleCaptureItem : CaptureItemBase
     {
         #region Properties
 

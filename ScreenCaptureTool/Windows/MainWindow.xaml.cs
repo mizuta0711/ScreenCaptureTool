@@ -670,7 +670,8 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
-            CaptureSettingsWindow dialog = new CaptureSettingsWindow { 
+            CaptureSettingsWindow dialog = new CaptureSettingsWindow
+            {
                 Owner = this    // 現在のウィンドウを親に設定
             };
             if (dialog.ShowDialog() == true)
@@ -683,8 +684,7 @@ namespace ScreenCaptureTool.Windows
                 MessageBox.Show("キャンセルされました。");
             }
 
-
-            CaptureItem? captureItem = null;
+            CaptureItemBase? captureItem = null;
 
             // ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
             if (CaptureRectRadioButton.IsChecked == true)

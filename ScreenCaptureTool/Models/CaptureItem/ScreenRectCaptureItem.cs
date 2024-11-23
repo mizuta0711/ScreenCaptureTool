@@ -12,7 +12,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// 画面矩形キャプチャーアイテム
     /// </summary>
     [Serializable]
-    public class ScreenRectCaptureItem : CaptureItem
+    public class ScreenRectCaptureItem : CaptureItemBase
     {
         #region Properties
 

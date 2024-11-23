@@ -8,7 +8,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
     /// キャプチャーアイテム
     /// </summary>
     [Serializable]
-    public abstract class CaptureItem
+    public abstract class CaptureItemBase
     {
         #region Properties
 
@@ -34,7 +34,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        protected CaptureItem()
+        protected CaptureItemBase()
         {
             SubFolder = null;
             FileName = DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -45,7 +45,7 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// </summary>
         /// <param name="fileName">ファイル名(拡張子なし)</param>
         /// <param name="subFilder">サブフォルダ名</param>
-        protected CaptureItem(string fileName, string? subFilder = null)
+        protected CaptureItemBase(string fileName, string? subFilder = null)
         {
             FileName = fileName;
             SubFolder = subFilder;
