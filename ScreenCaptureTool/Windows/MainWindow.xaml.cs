@@ -48,7 +48,7 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private ProjectSetting projectSettings = new ProjectSetting();
 
-        private RecordingSetting? recordingSetting;
+        private RecordingSetting? CurrentSetting;
 
         #endregion Variable
 
@@ -359,13 +359,13 @@ namespace ScreenCaptureTool.Windows
         /// <returns>true: 成功 / false: 失敗</returns>
         private bool SaveCaptureImage(Bitmap bitmap)
         {
-            if (recordingSetting == null)
+            if (CurrentSetting == null)
             {
                 ShowErrorDialog("撮影設定が選択されていません。");
                 return false;
             }
 
-            if (recordingSetting.SaveType == RecordingSetting.ImageSaveType.Clipboard)
+            if (CurrentSetting.SaveType == RecordingSetting.ImageSaveType.Clipboard)
             {
                 // クリップボードにコピー
                 BitmapHelper.CopyToClipboard(bitmap);
@@ -373,7 +373,7 @@ namespace ScreenCaptureTool.Windows
             }
 
             // ComboBoxから選択または入力されたファイル名を取得
-            string selectedFileName = recordingSetting.Name.Trim();
+            string selectedFileName = CurrentSetting.Name.Trim();
             if (string.IsNullOrEmpty(selectedFileName))
             {
                 ShowErrorDialog("ファイル名を入力してください。");
@@ -383,8 +383,8 @@ namespace ScreenCaptureTool.Windows
             try
             {
                 // 画像ファイルに保存
-                string filePath = CreateFilePath(saveFolderPath, selectedFileName, recordingSetting.FileExtension);
-                if (BitmapHelper.SaveToFile(bitmap, filePath, recordingSetting.SaveType, recordingSetting.ConfirmOverrideFile) == false)
+                string filePath = CreateFilePath(saveFolderPath, selectedFileName, CurrentSetting.FileExtension);
+                if (BitmapHelper.SaveToFile(bitmap, filePath, CurrentSetting.SaveType, CurrentSetting.ConfirmOverrideFile) == false)
                 {
                     return false;
                 }
@@ -680,7 +680,7 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void EditSettingButton_Click(object sender, RoutedEventArgs e)
         {
-            if (recordingSetting == null)
+            if (CurrentSetting == null)
             {
                 ShowErrorDialog("撮影設定が選択されていません。");
                 return;
@@ -688,9 +688,11 @@ namespace ScreenCaptureTool.Windows
 
             RecordingSettingsWindow dialog = new RecordingSettingsWindow();
             dialog.Owner = this;    // 現在のウィンドウを親に設定
-            dialog.LoadSettings(recordingSetting);
+            dialog.LoadSettings(CurrentSetting);
             if (dialog.ShowDialog() == true)
             {
+                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings);
+                view.Refresh();
             }
         }
 
@@ -699,7 +701,7 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
-            if (recordingSetting == null)
+            if (CurrentSetting == null)
             {
                 ShowErrorDialog("撮影設定が選択されていません。");
                 return;
@@ -708,14 +710,14 @@ namespace ScreenCaptureTool.Windows
             try
             {
                 // ファイル名が未入力の場合はエラー
-                if (recordingSetting.SaveType != RecordingSetting.ImageSaveType.Clipboard &&
-                    string.IsNullOrEmpty(recordingSetting.Name))
+                if (CurrentSetting.SaveType != RecordingSetting.ImageSaveType.Clipboard &&
+                    string.IsNullOrEmpty(CurrentSetting.Name))
                 {
                     ShowErrorDialog("ファイル名を入力してください。");
                     return;
                 }
 
-                var captureItem = recordingSetting.GetCaptureItem();
+                var captureItem = CurrentSetting.GetCaptureItem();
                 // キャプチャ処理
                 var provider = CaptureProviderFactory.InstantiateCaptureProvider(captureItem);
                 var bitmap = provider.Capture();
@@ -724,8 +726,8 @@ namespace ScreenCaptureTool.Windows
                     if (provider.CaptureItem is ManualScreenRectCaptureItem manualScreenRectCaptureItem)
                     {
                         // 選択された矩形を取得
-                        recordingSetting.Location = manualScreenRectCaptureItem.TargetRect.Location;
-                        recordingSetting.Size = manualScreenRectCaptureItem.TargetRect.Size;
+                        CurrentSetting.Location = manualScreenRectCaptureItem.TargetRect.Location;
+                        CurrentSetting.Size = manualScreenRectCaptureItem.TargetRect.Size;
                     }
 
                     SaveCaptureImage(bitmap);
@@ -815,6 +817,9 @@ namespace ScreenCaptureTool.Windows
             }
         }
 
+        /// <summary>
+        /// 撮影設定一覧の選択変更
+        /// </summary>
         private void SettingListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // 選択されたアイテムを取得
@@ -823,7 +828,7 @@ namespace ScreenCaptureTool.Windows
                 if (listView.SelectedItem is RecordingSetting setting)
                 {
                     // 選択された設定を保持
-                    recordingSetting = setting;
+                    CurrentSetting = setting;
                 }
             }
         }

@@ -51,10 +51,10 @@
                                   SelectionChanged="SettingListView_SelectionChanged">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="名前" DisplayMemberBinding="{Binding Name}" Width="150" />
+                                    <GridViewColumn Header="名前" DisplayMemberBinding="{Binding Name}" Width="100" />
                                     <GridViewColumn Header="タイプ" DisplayMemberBinding="{Binding Type}" Width="100" />
                                     <GridViewColumn Header="保存方法" DisplayMemberBinding="{Binding SaveType}" Width="100" />
-                                    <GridViewColumn Header="操作" Width="100" />
+                                    <GridViewColumn Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
                                 </GridView>
                             </ListView.View>
                         </ListView>
