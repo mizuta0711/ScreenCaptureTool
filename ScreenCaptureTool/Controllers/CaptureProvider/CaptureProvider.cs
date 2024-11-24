@@ -9,10 +9,16 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
     /// </summary>
     public abstract class CaptureProvider
     {
+        #region Property
+
         /// <summary>
         /// キャプチャーアイテム
         /// </summary>
-        protected CaptureItemBase CaptureItem { set; get; }
+        public CaptureItemBase CaptureItem { protected set; get; }
+
+        #endregion Property
+
+        #region Constructor
 
         /// <summary>
         /// コンストラクタ
@@ -23,6 +29,10 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
             CaptureItem = item;
         }
 
+        #endregion Constructor
+
+        #region Methods(Public)
+
         /// <summary>
         /// キャプチャー実行
         /// </summary>
@@ -31,5 +41,7 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         {
             return CaptureItem?.Capture();
         }
+
+        #endregion Methods(Public)
     }
 }

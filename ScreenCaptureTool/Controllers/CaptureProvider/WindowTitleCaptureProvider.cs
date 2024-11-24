@@ -13,6 +13,11 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         /// <param name="item">キャプチャーアイテム</param>
         public WindowTitleCaptureProvider(CaptureItemBase item) : base(item)
         {
+            // キャプチャーアイテムの型チェック
+            if (!(item is WindowTitleCaptureItem))
+            {
+                throw new System.ArgumentException("item must be WindowTitleCaptureItem", nameof(item));
+            }
         }
     }
 }

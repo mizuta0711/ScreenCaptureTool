@@ -1,10 +1,15 @@
 ﻿using ScreenCaptureTool.Models.CaptureItem;
 
+using System;
 using System.Drawing;
 
 namespace ScreenCaptureTool.Models
 {
-    public class RecordingSetting
+    /// <summary>
+    /// 撮影設定
+    /// </summary>
+    [Serializable]
+    public class RecordingSettings
     {
         #region Struct
 
@@ -45,10 +50,10 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         public enum ImageSaveType
         {
-            clipbord,   // クリップボード
-            filePNG,    // 画像(PNG形式)
-            fileBMP,    // 画像(BMP形式)
-            fileJPEG    // 画像(JPEG形式)
+            Clipboard,  // クリップボード
+            FilePNG,    // 画像(PNG形式)
+            FileBMP,    // 画像(BMP形式)
+            FileJPEG    // 画像(JPEG形式)
         }
 
         #endregion Enum
@@ -59,6 +64,11 @@ namespace ScreenCaptureTool.Models
         /// 名称
         /// </summary>
         public string Name { get; set; } = "名称未設定";
+
+        /// <summary>
+        /// 説明
+        /// </summary>
+        public string Description { get; set; } = "";
 
         /// <summary>
         /// 録画方法
@@ -113,7 +123,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// 画像保存形式
         /// </summary>
-        public ImageSaveType SaveType { get; set; } = ImageSaveType.filePNG;
+        public ImageSaveType SaveType { get; set; } = ImageSaveType.FilePNG;
 
         #endregion Properties
 
@@ -122,7 +132,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public RecordingSetting(string name)
+        public RecordingSettings(string name)
         {
             Name = name;
         }
@@ -132,7 +142,7 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         /// <param name="name">名称</param>
         /// <param name="captureItem">キャプチャーアイテム</param>
-        public RecordingSetting(string name, CaptureItemBase captureItem) : this(name)
+        public RecordingSettings(string name, CaptureItemBase captureItem) : this(name)
         {
             // キャプチャーアイテムから設定を取得
             // ウィンドウキャプチャー
@@ -154,5 +164,48 @@ namespace ScreenCaptureTool.Models
         }
 
         #endregion Constructor
+
+        #region Methods(Public)
+
+        /// <summary>
+        /// 設定に基づいてキャプチャーアイテムを取得する
+        /// </summary>
+        /// <returns>キャプチャーアイテム</returns>
+        /// <exception cref="InvalidOperationException">生成できなかった場合</exception>
+        public CaptureItemBase GetCaptureItem()
+        {
+            // キャプチャーアイテムを生成
+            switch (Type)
+            {
+                // ウィンドウキャプチャー
+                case RecordingType.Window:
+                    return new WindowTitleCaptureItem(WindowTitle);
+
+                // 画面の一部キャプチャー
+                case RecordingType.ScreenRect:
+                    if (LocationFixed && SizeFixed)
+                    {
+                        // 位置とサイズが固定されている場合
+                        return new ScreenRectCaptureItem(Location, Size);
+                    }
+                    else if (LocationFixed)
+                    {
+                        // 位置が固定されている場合
+                        return new ManualScreenRectCaptureItem(Location);
+                    }
+                    else if (SizeFixed)
+                    {
+                        // サイズが固定されている場合
+                        return new ManualScreenRectCaptureItem(Size);
+                    }
+                    // 位置とサイズが固定されていない場合
+                    return new ManualScreenRectCaptureItem();
+            }
+
+            // 生成できなかった場合は例外を投げる
+            throw new InvalidOperationException();
+        }
+
+        #endregion Methods(Public)
     }
 }

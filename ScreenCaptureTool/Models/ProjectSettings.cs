@@ -11,43 +11,12 @@ namespace ScreenCaptureTool.Models
     [Serializable]
     public class ProjectSettings
     {
-        #region Enum
-
-        public enum CaptureType
-        {
-            ScreenRect,     // 画面の指定矩形
-            Window,         // ウィンドウ
-            FreeRect        // 自由矩形
-        }
-
-        #endregion Enum
-
         #region Properties
 
         /// <summary>
         /// プロジェクトファイルのパス
         /// </summary>
         public string FilePath;
-
-        /// <summary>
-        /// キャプチャー範囲：X
-        /// </summary>
-        public int CaptureLeft { get; set; }
-
-        /// <summary>
-        /// キャプチャー範囲：Y
-        /// </summary>
-        public int CaptureTop { get; set; }
-
-        /// <summary>
-        /// キャプチャー範囲：幅
-        /// </summary>
-        public int CaptureWidth { get; set; }
-
-        /// <summary>
-        /// キャプチャー範囲：高さ
-        /// </summary>
-        public int CaptureHeight { get; set; }
 
         /// <summary>
         /// ウィンドウ位置：X
@@ -68,16 +37,6 @@ namespace ScreenCaptureTool.Models
         /// ウィンドウサイズ：高さ
         /// </summary>
         public double WindowHeight { get; set; }
-
-        /// <summary>
-        /// キャプチャーするウィンドウタイトル
-        /// </summary>
-        public string CaptureWindowTitle { get; set; }
-
-        /// <summary>
-        /// チャプチャータイプ
-        /// </summary>
-        public CaptureType SelectedCaptureType { get; set; }
 
         /// <summary>
         /// サムネイル画像サイズ
@@ -107,13 +66,6 @@ namespace ScreenCaptureTool.Models
             WindowTop = 0;
             WindowWidth = 0;
             WindowHeight = 0;
-
-            SelectedCaptureType = CaptureType.ScreenRect;
-            CaptureLeft = 0;
-            CaptureTop = 0;
-            CaptureWidth = 1920;
-            CaptureHeight = 1280;
-            CaptureWindowTitle = "";
 
             ThumbnailSize = 200;
             SaveFolderPath = Environment.CurrentDirectory;

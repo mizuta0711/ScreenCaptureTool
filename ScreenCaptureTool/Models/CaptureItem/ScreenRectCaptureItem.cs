@@ -40,6 +40,16 @@ namespace ScreenCaptureTool.Models.CaptureItem
         /// <summary>
         /// コンストラクタ
         /// </summary>
+        /// <param name="location">キャプチャー位置</param>
+        /// <param name="size">キャプチャーサイズ</param>
+        public ScreenRectCaptureItem(System.Drawing.Point location, System.Drawing.Size size)
+        {
+            TargetRect = new Rectangle(location, size);
+        }
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         /// <param name="rect">キャプチャー範囲</param>
         public ScreenRectCaptureItem(Rectangle rect) : this(rect.Left, rect.Top, rect.Width, rect.Height)
         {

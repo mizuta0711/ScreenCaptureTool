@@ -16,8 +16,6 @@ using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Utilities;
 using System.Windows.Input;
 using ScreenCaptureTool.Controllers.CaptureProvider;
-using static ScreenCaptureTool.Utilities.Win32API;
-using System.Collections.Specialized;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -50,6 +48,8 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private ProjectSettings projectSettings = new ProjectSettings();
 
+        private RecordingSettings recordingSettings = new RecordingSettings("", new ManualScreenRectCaptureItem());
+
         #endregion Variable
 
         #region Constructor
@@ -63,11 +63,6 @@ namespace ScreenCaptureTool.Windows
 
             // DataContextにImageFilesをバインド
             DataContext = this;
-
-            // ラジオボタンの選択によって表示するUIを切り替える
-            CaptureRectRadioButton.Checked += CaptureOption_CheckedChanged;
-            CaptureWindowRadioButton.Checked += CaptureOption_CheckedChanged;
-            FreeRectRadioButton.Checked += CaptureOption_CheckedChanged;
 
             // プロジェクトファイルを読み込む
             LoadProjectFile(projectSettings.FilePath);
@@ -102,12 +97,6 @@ namespace ScreenCaptureTool.Windows
         /// <param name="settings">プロジェクト設定</param>
         private void LoadProjectSettings(ProjectSettings settings)
         {
-            // キャプチャー範囲
-            CaptureLeftTextBox.Text = settings.CaptureLeft.ToString();
-            CaptureTopTextBox.Text = settings.CaptureTop.ToString();
-            CaptureWidthTextBox.Text = settings.CaptureWidth.ToString();
-            CaptureHeightTextBox.Text = settings.CaptureHeight.ToString();
-
             // サムネイルサイズ
             if (settings.ThumbnailSize > 0)
             {
@@ -124,19 +113,6 @@ namespace ScreenCaptureTool.Windows
             {
                 Width = settings.WindowWidth;
                 Height = settings.WindowHeight;
-            }
-
-            // ウィンドウタイトルを復元
-            WindowTitleTextBox.Text = settings.CaptureWindowTitle;
-
-            // チャプチャータイプを復元
-            if (settings.SelectedCaptureType == ProjectSettings.CaptureType.ScreenRect)
-            {
-                CaptureRectRadioButton.IsChecked = true;
-            }
-            else
-            {
-                CaptureWindowRadioButton.IsChecked = true;
             }
 
             // 保存ファイル名一覧
@@ -167,15 +143,6 @@ namespace ScreenCaptureTool.Windows
             settings.WindowLeft = Left;
             settings.WindowWidth = Width;
             settings.WindowHeight = Height;
-            // キャプチャー範囲
-            settings.CaptureLeft = int.TryParse(CaptureLeftTextBox.Text, out var x) ? x : 0;
-            settings.CaptureTop = int.TryParse(CaptureTopTextBox.Text, out var y) ? y : 0;
-            settings.CaptureWidth = int.TryParse(CaptureWidthTextBox.Text, out var width) ? width : 0;
-            settings.CaptureHeight = int.TryParse(CaptureHeightTextBox.Text, out var height) ? height : 0;
-            // キャプチャーウィンドウタイトル
-            settings.CaptureWindowTitle = WindowTitleTextBox.Text;
-            // チャプチャータイプ
-            settings.SelectedCaptureType = CaptureRectRadioButton.IsChecked ?? true ? ProjectSettings.CaptureType.ScreenRect : ProjectSettings.CaptureType.Window;
             // サムネイルサイズ
             settings.ThumbnailSize = thumbnailSize;
             // 保存ファイル名一覧
@@ -630,29 +597,6 @@ namespace ScreenCaptureTool.Windows
         }
 
         /// <summary>
-        /// キャプチャー選択ラジオボタン：選択が変更された
-        /// </summary>
-        private void CaptureOption_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            // 矩形キャプチャーが選ばれている場合、矩形入力パネルを表示
-            if (CaptureRectRadioButton.IsChecked == true)
-            {
-                RectCapturePanel.Visibility = Visibility.Visible;
-                WindowCapturePanel.Visibility = Visibility.Collapsed;
-            }
-            else if (CaptureWindowRadioButton.IsChecked == true)
-            {
-                RectCapturePanel.Visibility = Visibility.Collapsed;
-                WindowCapturePanel.Visibility = Visibility.Visible;
-            }
-            else if (FreeRectRadioButton.IsChecked == true)
-            {
-                RectCapturePanel.Visibility = Visibility.Collapsed;
-                WindowCapturePanel.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        /// <summary>
         /// サムネイルサイズ変更のコンボボックス：選択変更
         /// </summary>
         private void ThumbnailSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -666,55 +610,59 @@ namespace ScreenCaptureTool.Windows
         }
 
         /// <summary>
+        /// 設定ボタン：押下
+        /// </summary>
+        private void SettingButton_Click(object sender, RoutedEventArgs e)
+        {
+            CaptureSettingsWindow dialog = new CaptureSettingsWindow();
+            dialog.Owner = this;    // 現在のウィンドウを親に設定
+            dialog.LoadSettings(recordingSettings);
+            if (dialog.ShowDialog() == true)
+            {
+            }
+        }
+
+        /// <summary>
         /// 撮影ボタン：押下
         /// </summary>
         private void CaptureButton_Click(object sender, RoutedEventArgs e)
         {
-            CaptureSettingsWindow dialog = new CaptureSettingsWindow
+            try
             {
-                Owner = this    // 現在のウィンドウを親に設定
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                string userInput = "";
-                MessageBox.Show($"入力された値: {userInput}");
-            }
-            else
-            {
-                MessageBox.Show("キャンセルされました。");
-            }
+                // ファイル名が未入力の場合はエラー
+                if (string.IsNullOrEmpty(FileNameComboBox.Text))
+                {
+                    ShowErrorDialog("ファイル名を入力してください。");
+                    return;
+                }
 
-            CaptureItemBase? captureItem = null;
-
-            // ラジオボタンで選択されたキャプチャ方法に応じて処理を分ける
-            if (CaptureRectRadioButton.IsChecked == true)
-            {
-                // 矩形キャプチャ処理
-                captureItem = new ScreenRectCaptureItem(int.Parse(CaptureLeftTextBox.Text),
-                                                        int.Parse(CaptureTopTextBox.Text),
-                                                        int.Parse(CaptureWidthTextBox.Text),
-                                                        int.Parse(CaptureHeightTextBox.Text));
-            }
-            else if (CaptureWindowRadioButton.IsChecked == true)
-            {
-                // ウィンドウタイトルキャプチャ処理
-                captureItem = new WindowTitleCaptureItem(WindowTitleTextBox.Text);
-            }
-            else if (FreeRectRadioButton.IsChecked == true)
-            {
-                // マニュアル矩形キャプチャ処理
-                captureItem = new ManualScreenRectCaptureItem();
-            }
-
-            // キャプチャ処理
-            if (captureItem != null)
-            {
+                var captureItem = recordingSettings.GetCaptureItem();
+                // キャプチャ処理
                 var provider = CaptureProviderFactory.InstantiateCaptureProvider(captureItem);
                 var bitmap = provider.Capture();
                 if (bitmap != null)
                 {
+                    if (provider.CaptureItem is ManualScreenRectCaptureItem manualScreenRectCaptureItem)
+                    {
+                        // 選択された矩形を取得
+                        recordingSettings.Location = manualScreenRectCaptureItem.TargetRect.Location;
+                        recordingSettings.Size = manualScreenRectCaptureItem.TargetRect.Size;
+                    }
+
                     SaveCaptureImage(bitmap);
                 }
+            }
+            catch (ArgumentException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                ShowErrorDialog("撮影設定に誤りがあります");
+                // 撮影設定を開く
+                SettingButton_Click(sender, e);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                ShowErrorDialog("撮影に失敗しました\n" + ex.Message);
             }
         }
 

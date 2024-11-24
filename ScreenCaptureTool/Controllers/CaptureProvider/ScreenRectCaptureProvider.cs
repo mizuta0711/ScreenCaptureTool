@@ -15,6 +15,11 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         /// <param name="item">キャプチャーアイテム</param>
         public ScreenRectCaptureProvider(CaptureItemBase item) : base(item)
         {
+            // キャプチャーアイテムの型チェック
+            if (!(item is ScreenRectCaptureItem))
+            {
+                throw new System.ArgumentException("item must be ScreenRectCaptureItem", nameof(item));
+            }
         }
     }
 }

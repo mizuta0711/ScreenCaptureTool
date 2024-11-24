@@ -1,6 +1,7 @@
 ﻿using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Windows;
 
+using System;
 using System.Drawing;
 
 namespace ScreenCaptureTool.Controllers.CaptureProvider
@@ -16,26 +17,58 @@ namespace ScreenCaptureTool.Controllers.CaptureProvider
         /// <param name="item">キャプチャーアイテム</param>
         public ManualScreenRectCaptureProvider(CaptureItemBase item) : base(item)
         {
+            // キャプチャーアイテムの型チェック
+            if (!(item is ManualScreenRectCaptureItem))
+            {
+                throw new System.ArgumentException("item must be ManualScreenRectCaptureItem", nameof(item));
+            }
         }
 
         /// <summary>
         /// キャプチャーを行う
         /// </summary>
         /// <returns>画像(失敗時はnull)</returns>
+        /// <exception cref="InvalidOperationException">キャプチャーアイテムがManualScreenRectCaptureItemでない場合</exception>
         public override Bitmap? Capture()
         {
             var overlayWindow = new CaptureRectOverlayWindow();
-            if (overlayWindow.ShowDialog() == true)
+
+            if (CaptureItem is ManualScreenRectCaptureItem manualScreenRectCaptureItem)
             {
-                // TODO: インスタンスを置き換えているが、矩形情報だけを更新するように変更する
-                // TODO: 画面の拡大率が反映されないので、キャプチャー時に拡大率を考慮するように変更する
-                CaptureItem = new ScreenRectCaptureItem(overlayWindow.SelectedRect);
-                return base.Capture();
-            }
-            else
-            {
+                if (manualScreenRectCaptureItem.LocationFixed && manualScreenRectCaptureItem.SizeFixed)
+                {
+                    // 位置もサイズも固定されている場合はそのままキャプチャー
+                    return base.Capture();
+                }
+
+                // 範囲情報を設定する
+                overlayWindow.SetCaptureItem(manualScreenRectCaptureItem);
+
+                // オーバーレイウィンドウを表示
+                if (overlayWindow.ShowDialog() == true)
+                {
+                    // 選択された矩形が空の場合はキャンセル
+                    if (overlayWindow.SelectedRect.IsEmpty)
+                    {
+                        return null;
+                    }
+
+                    // 選択された矩形を設定
+                    manualScreenRectCaptureItem.TargetRect = new Rectangle(
+                        (int)Math.Floor(overlayWindow.SelectedRect.X),
+                        (int)Math.Floor(overlayWindow.SelectedRect.Y),
+                        (int)Math.Floor(overlayWindow.SelectedRect.Width),
+                        (int)Math.Floor(overlayWindow.SelectedRect.Height)
+                    );
+                    return base.Capture();
+                }
+
+                // キャンセル
                 return null;
             }
+
+            // キャプチャーアイテムがManualScreenRectCaptureItemでない場合は例外
+            throw new InvalidOperationException("CaptureItem is not ManualScreenRectCaptureItem");
         }
     }
 }
