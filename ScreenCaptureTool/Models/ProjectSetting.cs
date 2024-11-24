@@ -9,7 +9,7 @@ namespace ScreenCaptureTool.Models
     /// プロジェクトの設定を保持するクラス
     /// </summary>
     [Serializable]
-    public class ProjectSettings
+    public class ProjectSetting
     {
         #region Properties
 
@@ -44,14 +44,14 @@ namespace ScreenCaptureTool.Models
         public int ThumbnailSize { get; set; }
 
         /// <summary>
-        /// 保存ファイル名の一覧
-        /// </summary>
-        public ObservableCollection<string> SaveFileNames;
-
-        /// <summary>
         /// 画像保存先フォルダ
         /// </summary>
         public string SaveFolderPath { get; set; }
+
+        /// <summary>
+        /// 撮影設定一覧
+        /// </summary>
+        //public ObservableCollection<RecordingSetting> RecordingSettings;
 
         #endregion Properties
 
@@ -60,7 +60,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// デフォルトコンストラクタ
         /// </summary>
-        public ProjectSettings()
+        public ProjectSetting()
         {
             WindowLeft = 0;
             WindowTop = 0;
@@ -69,7 +69,7 @@ namespace ScreenCaptureTool.Models
 
             ThumbnailSize = 200;
             SaveFolderPath = Environment.CurrentDirectory;
-            SaveFileNames = new ObservableCollection<string>();
+            //RecordingSettings = new ObservableCollection<RecordingSetting>();
 
             FilePath = Path.Combine(Environment.CurrentDirectory, "ScreenCaptureTool.scp");
         }
@@ -89,7 +89,7 @@ namespace ScreenCaptureTool.Models
         {
             try
             {
-                var serializer = new XmlSerializer(typeof(ProjectSettings));
+                var serializer = new XmlSerializer(typeof(ProjectSetting));
                 using (var fs = new FileStream(filePath, FileMode.Create))
                 {
                     serializer.Serialize(fs, this);
@@ -112,14 +112,14 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         /// <param name="filePath">ファイルパス</param>
         /// <returns>インスタンス(失敗時はnull)</returns>
-        public static ProjectSettings? Load(string filePath)
+        public static ProjectSetting? Load(string filePath)
         {
             try
             {
-                var serializer = new XmlSerializer(typeof(ProjectSettings));
+                var serializer = new XmlSerializer(typeof(ProjectSetting));
                 using (var fs = new FileStream(filePath, FileMode.Open))
                 {
-                    var projectSetting = serializer.Deserialize(fs) as ProjectSettings;
+                    var projectSetting = serializer.Deserialize(fs) as ProjectSetting;
                     if (projectSetting != null)
                     {
                         projectSetting.FilePath = filePath;

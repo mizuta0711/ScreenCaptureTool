@@ -42,35 +42,46 @@
 
             <!-- 上部の設定UI -->
             <StackPanel Grid.Row="0"
-                    Orientation="Vertical">
-
-                <StackPanel Orientation="Horizontal"
-                        Margin="10,0,10,0">
-
+                        Height="150"
+                        Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
                     <StackPanel>
-                        <!-- ファイル名 -->
-                        <TextBlock Text="設定名:"
-                                FontWeight="Bold"
-                                VerticalAlignment="Center" />
-                        <ComboBox x:Name="FileNameComboBox"
-                                Width="150"
-                                Height="25"
-                                IsEditable="True"
-                                Margin="10,0,0,0" />
+                        <ListView Height="150"
+                                  ItemsSource="{Binding RecordingSettings}"
+                                  SelectionChanged="SettingListView_SelectionChanged">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="名前" DisplayMemberBinding="{Binding Name}" Width="150" />
+                                    <GridViewColumn Header="タイプ" DisplayMemberBinding="{Binding Type}" Width="100" />
+                                    <GridViewColumn Header="保存方法" DisplayMemberBinding="{Binding SaveType}" Width="100" />
+                                    <GridViewColumn Header="操作" Width="100" />
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
                     </StackPanel>
 
                     <StackPanel>
                         <!-- 撮影ボタン -->
                         <StackPanel Orientation="Horizontal"
-                                Margin="10,0,0,10">
-                            <Button Content="設定"
-                                    Width="70"
-                                    Height="50"
-                                    Click="SettingButton_Click"
-                                    Margin="10,0,0,0" />
-                            <Button Content="撮影"
-                                    Width="70"
-                                    Height="50"
+                                    Margin="10,0,0,10">
+                            <StackPanel Orientation="Vertical">
+                                <Button x:Name="buttonAddSetting"
+                                        Content="追加"
+                                        Width="70"
+                                        Height="25"
+                                        Click="AddSettingButton_Click"
+                                        Margin="0,0,0,0" />
+                                <Button x:Name="buttonEditSetting"
+                                        Content="編集"
+                                        Width="70"
+                                        Height="25"
+                                        Click="EditSettingButton_Click"
+                                        Margin="0,5,0,0" />
+                            </StackPanel>
+                            <Button x:Name="buttonCapture"
+                                    Content="撮影"
+                                    Width="100"
+                                    Height="100"
                                     Click="CaptureButton_Click"
                                     Margin="10,0,0,0" />
                         </StackPanel>

@@ -77,7 +77,7 @@ namespace ScreenCaptureTool.Utilities
         /// <param name="saveType">保存形式</param>
         /// <param name="confirm">上書き確認を行うか</param>
         /// <returns>true: 保存 / false: 失敗</returns>
-        internal static bool SaveToFile(Bitmap bitmap, string filePath, RecordingSettings.ImageSaveType saveType, bool confirm)
+        internal static bool SaveToFile(Bitmap bitmap, string filePath, RecordingSetting.ImageSaveType saveType, bool confirm)
         {
             // フォルダが存在しない場合は作成する
             if (!Directory.Exists(Path.GetDirectoryName(filePath)))
@@ -107,15 +107,15 @@ namespace ScreenCaptureTool.Utilities
             // 指定された形式で保存
             switch (saveType)
             {
-                case RecordingSettings.ImageSaveType.FilePNG:
+                case RecordingSetting.ImageSaveType.FilePNG:
                     bitmap.Save(filePath, ImageFormat.Png);
                     return true;
 
-                case RecordingSettings.ImageSaveType.FileBMP:
+                case RecordingSetting.ImageSaveType.FileBMP:
                     bitmap.Save(filePath, ImageFormat.Bmp);
                     return true;
 
-                case RecordingSettings.ImageSaveType.FileJPEG:
+                case RecordingSetting.ImageSaveType.FileJPEG:
                     bitmap.Save(filePath, ImageFormat.Jpeg);
                     return true;
             }

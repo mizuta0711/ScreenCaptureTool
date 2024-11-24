@@ -3,7 +3,7 @@ using ScreenCaptureTool.Models.CaptureItem;
 
 using System.Windows;
 
-using static ScreenCaptureTool.Models.RecordingSettings;
+using static ScreenCaptureTool.Models.RecordingSetting;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -14,7 +14,7 @@ namespace ScreenCaptureTool.Windows
     {
         #region Properties
 
-        public RecordingSettings Settings { get; private set; }
+        public RecordingSetting Setting { get; private set; }
 
         #endregion Properties
 
@@ -25,7 +25,8 @@ namespace ScreenCaptureTool.Windows
             InitializeComponent();
 
             // 新規用に設定を作成
-            Settings = new RecordingSettings("新規設定");
+            Setting = new RecordingSetting("新規設定");
+            LoadSettings(Setting);
         }
 
         #endregion Constructors
@@ -38,22 +39,22 @@ namespace ScreenCaptureTool.Windows
         /// 設定の読み込み（画面UIへの反映）
         /// </summary>
         /// <param name="setting">撮影設定</param>
-        public void LoadSettings(RecordingSettings setting)
+        public void LoadSettings(RecordingSetting setting)
         {
             // 保持
-            Settings = setting;
+            Setting = setting;
 
             // 名称
             textBoxName.Text = setting.Name;
 
             // 撮影方法：ウィンドウ
-            radioButtonWindow.IsChecked = setting.Type == RecordingSettings.RecordingType.Window;
+            radioButtonWindow.IsChecked = setting.Type == RecordingSetting.RecordingType.Window;
 
             // ウィンドウタイトル
             textBoxWindowTitle.Text = setting.WindowTitle;
 
             // 撮影方法：画面の一部
-            radioButtonRectangle.IsChecked = setting.Type == RecordingSettings.RecordingType.ScreenRect;
+            radioButtonRectangle.IsChecked = setting.Type == RecordingSetting.RecordingType.ScreenRect;
 
             // 撮影位置固定
             checkBoxFixedPos.IsChecked = setting.LocationFixed;
@@ -78,10 +79,10 @@ namespace ScreenCaptureTool.Windows
             textBoxResizeHeight.Text = setting.ResizeSize.Height.ToString();
 
             // 保存形式
-            radioButtonSaveClipboard.IsChecked = setting.SaveType == RecordingSettings.ImageSaveType.Clipboard;
-            radioButtonSavePNG.IsChecked = setting.SaveType == RecordingSettings.ImageSaveType.FilePNG;
-            radioButtonSaveBMP.IsChecked = setting.SaveType == RecordingSettings.ImageSaveType.FileBMP;
-            radioButtonSaveJPEG.IsChecked = setting.SaveType == RecordingSettings.ImageSaveType.FileJPEG;
+            radioButtonSaveClipboard.IsChecked = setting.SaveType == RecordingSetting.ImageSaveType.Clipboard;
+            radioButtonSavePNG.IsChecked = setting.SaveType == RecordingSetting.ImageSaveType.FilePNG;
+            radioButtonSaveBMP.IsChecked = setting.SaveType == RecordingSetting.ImageSaveType.FileBMP;
+            radioButtonSaveJPEG.IsChecked = setting.SaveType == RecordingSetting.ImageSaveType.FileJPEG;
 
             // 保存形式：ファイルの上書き確認
             checkBoxConfirmOverrideFile.IsChecked = setting.ConfirmOverrideFile;
@@ -95,49 +96,60 @@ namespace ScreenCaptureTool.Windows
         #region Methods(Private)
 
         /// <summary>
+        /// 文字列を数値に変換
+        /// </summary>
+        /// <param name="text">テキスト</param>
+        /// <param name="defaultValue">デフォルト値</param>
+        /// <returns>数値(変換できない場合はデフォルト値)</returns>
+        private int ParseInt(string text, int defaultValue = 0)
+        {
+            return int.TryParse(text, out int value) ? value : defaultValue;
+        }
+
+        /// <summary>
         /// 現在の画面UIの設定値から、撮影設定の取得
         /// </summary>
         /// <returns>撮影設定</returns>
-        private RecordingSettings SaveSettings()
+        private RecordingSetting SaveSettings()
         {
             // 名称
-            Settings.Name = textBoxName.Text;
+            Setting.Name = textBoxName.Text;
 
             // 撮影方法：ウィンドウ
             if (radioButtonWindow.IsChecked == true)
             {
-                Settings.Type = RecordingSettings.RecordingType.Window;
-                Settings.WindowTitle = textBoxWindowTitle.Text;
+                Setting.Type = RecordingSetting.RecordingType.Window;
+                Setting.WindowTitle = textBoxWindowTitle.Text;
             }
 
             // 撮影方法：画面の一部
             if (radioButtonRectangle.IsChecked == true)
             {
-                Settings.Type = RecordingSettings.RecordingType.ScreenRect;
-                Settings.LocationFixed = checkBoxFixedPos.IsChecked ?? false;
-                Settings.Location = new System.Drawing.Point(int.Parse(textBoxWindowPosX.Text), int.Parse(textBoxWindowPosY.Text));
-                Settings.SizeFixed = checkBoxFixedSize.IsChecked ?? false;
-                Settings.Size = new System.Drawing.Size(int.Parse(textBoxWindowWidth.Text), int.Parse(textBoxWindowHeight.Text));
+                Setting.Type = RecordingSetting.RecordingType.ScreenRect;
+                Setting.LocationFixed = checkBoxFixedPos.IsChecked ?? false;
+                Setting.Location = new System.Drawing.Point(ParseInt(textBoxWindowPosX.Text), ParseInt(textBoxWindowPosY.Text));
+                Setting.SizeFixed = checkBoxFixedSize.IsChecked ?? false;
+                Setting.Size = new System.Drawing.Size(ParseInt(textBoxWindowWidth.Text), ParseInt(textBoxWindowHeight.Text));
             }
 
             // 縁トリミング
-            Settings.TrimEdgeEnabled = checkBoxTrimEdge.IsChecked ?? false;
-            Settings.TrimEdgeInset = new EdgeInsets(int.Parse(textBoxTrimTop.Text), int.Parse(textBoxTrimBottom.Text), int.Parse(textBoxTrimLeft.Text), int.Parse(textBoxTrimRight.Text));
+            Setting.TrimEdgeEnabled = checkBoxTrimEdge.IsChecked ?? false;
+            Setting.TrimEdgeInset = new EdgeInsets(ParseInt(textBoxTrimTop.Text), ParseInt(textBoxTrimBottom.Text), ParseInt(textBoxTrimLeft.Text), int.Parse(textBoxTrimRight.Text));
 
             // リサイズ
-            Settings.ResizeEnabled = checkBoxResize.IsChecked ?? false;
-            Settings.ResizeSize = new System.Drawing.Size(int.Parse(textBoxResizeWidth.Text), int.Parse(textBoxResizeHeight.Text));
+            Setting.ResizeEnabled = checkBoxResize.IsChecked ?? false;
+            Setting.ResizeSize = new System.Drawing.Size(ParseInt(textBoxResizeWidth.Text), ParseInt(textBoxResizeHeight.Text));
 
             // 保存形式
-            if (radioButtonSaveClipboard.IsChecked == true) Settings.SaveType = RecordingSettings.ImageSaveType.Clipboard;
-            if (radioButtonSavePNG.IsChecked == true) Settings.SaveType = RecordingSettings.ImageSaveType.FilePNG;
-            if (radioButtonSaveBMP.IsChecked == true) Settings.SaveType = RecordingSettings.ImageSaveType.FileBMP;
-            if (radioButtonSaveJPEG.IsChecked == true) Settings.SaveType = RecordingSettings.ImageSaveType.FileJPEG;
+            if (radioButtonSaveClipboard.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.Clipboard;
+            if (radioButtonSavePNG.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.FilePNG;
+            if (radioButtonSaveBMP.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.FileBMP;
+            if (radioButtonSaveJPEG.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.FileJPEG;
 
             // 保存形式：ファイルの上書き確認
-            Settings.ConfirmOverrideFile = checkBoxConfirmOverrideFile.IsChecked ?? false;
+            Setting.ConfirmOverrideFile = checkBoxConfirmOverrideFile.IsChecked ?? false;
 
-            return Settings;
+            return Setting;
         }
 
         /// <summary>
@@ -185,6 +197,14 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
+            // 名称の入力チェック
+            textBoxName.Text = textBoxName.Text.Trim();
+            if (string.IsNullOrEmpty(textBoxName.Text))
+            {
+                MessageBox.Show("名称を入力してください。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             // 変更内容を反映
             SaveSettings();
 

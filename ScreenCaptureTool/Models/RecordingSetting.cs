@@ -9,7 +9,7 @@ namespace ScreenCaptureTool.Models
     /// 撮影設定
     /// </summary>
     [Serializable]
-    public class RecordingSettings
+    public class RecordingSetting
     {
         #region Struct
 
@@ -137,7 +137,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        public RecordingSettings(string name)
+        public RecordingSetting(string name)
         {
             Name = name;
         }
@@ -147,7 +147,7 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         /// <param name="name">名称</param>
         /// <param name="captureItem">キャプチャーアイテム</param>
-        public RecordingSettings(string name, CaptureItemBase captureItem) : this(name)
+        public RecordingSetting(string name, CaptureItemBase captureItem) : this(name)
         {
             // キャプチャーアイテムから設定を取得
             // ウィンドウキャプチャー
