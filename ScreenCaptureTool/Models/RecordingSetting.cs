@@ -2,13 +2,13 @@
 
 using System;
 using System.Drawing;
+using System.Xml.Serialization;
 
 namespace ScreenCaptureTool.Models
 {
     /// <summary>
     /// 撮影設定
     /// </summary>
-    [Serializable]
     public class RecordingSetting
     {
         #region Struct
@@ -19,15 +19,15 @@ namespace ScreenCaptureTool.Models
         public struct EdgeInsets
         {
             public int Top;
-            public int Bottom;
             public int Left;
+            public int Bottom;
             public int Right;
 
-            public EdgeInsets(int top, int bottom, int left, int right)
+            public EdgeInsets(int top, int left, int bottom, int right)
             {
                 Top = top;
-                Bottom = bottom;
                 Left = left;
+                Bottom = bottom;
                 Right = right;
             }
         }
@@ -88,6 +88,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// ウィンドウ位置
         /// </summary>
+        [XmlIgnore]
         public Point Location { get; set; } = new Point(0, 0);
 
         /// <summary>
@@ -98,6 +99,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// ウィンドウサイズ
         /// </summary>
+        [XmlIgnore]
         public Size Size { get; set; } = new Size(0, 0);
 
         /// <summary>
@@ -108,6 +110,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// 画像加工：縁トリミングサイズ
         /// </summary>
+        [XmlIgnore]
         public EdgeInsets TrimEdgeInset { get; set; } = new EdgeInsets(0, 0, 0, 0);
 
         /// <summary>
@@ -118,6 +121,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// 画像加工：リサイズサイズ
         /// </summary>
+        [XmlIgnore]
         public Size ResizeSize { get; set; } = new Size(640, 480);
 
         /// <summary>
@@ -130,9 +134,104 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         public bool ConfirmOverrideFile { get; set; } = true;
 
+        #region Properties(Serialize)
+
+        /// <summary>
+        /// シリアライズ用：ウィンドウ位置
+        /// </summary>
+        [XmlElement("TrimEdgeInset")]
+        public string TrimEdgeInsetSerialized
+        {
+            get => $"{TrimEdgeInset.Top},{TrimEdgeInset.Left},{TrimEdgeInset.Bottom},{TrimEdgeInset.Right}";
+            set
+            {
+                try
+                {
+                    var parts = value.Split(',');
+                    TrimEdgeInset = new EdgeInsets(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]), int.Parse(parts[3]));
+                }
+                catch (Exception e)
+                {
+                    TrimEdgeInset = new EdgeInsets(0, 0, 0, 0);
+                }
+            }
+        }
+
+        /// <summary>
+        /// シリアライズ用：ウィンドウ位置
+        /// </summary>
+        [XmlElement("Location")]
+        public string LocationSerialized
+        {
+            get => $"{Location.X},{Location.Y}";
+            set
+            {
+                try
+                {
+                    var parts = value.Split(',');
+                    Location = new Point(int.Parse(parts[0]), int.Parse(parts[1]));
+                }
+                catch (Exception e)
+                {
+                    Location = new Point(0, 0);
+                }
+            }
+        }
+
+        /// <summary>
+        /// シリアライズ用：ウィンドウサイズ
+        /// </summary>
+        [XmlElement("Size")]
+        public string SizeSerialized
+        {
+            get => $"{Size.Width},{Size.Height}";
+            set
+            {
+                try
+                {
+                    var parts = value.Split(',');
+                    Size = new Size(int.Parse(parts[0]), int.Parse(parts[1]));
+                }
+                catch (Exception e)
+                {
+                    Size = new Size(0, 0);
+                }
+            }
+        }
+
+        /// <summary>
+        /// シリアライズ用：リサイズサイズ
+        /// </summary>
+        [XmlElement("ResizeSize")]
+        public string ResizeSizeSerialized
+        {
+            get => $"{ResizeSize.Width},{ResizeSize.Height}";
+            set
+            {
+                try
+                {
+                    var parts = value.Split(',');
+                    ResizeSize = new Size(int.Parse(parts[0]), int.Parse(parts[1]));
+                }
+                catch (Exception e)
+                {
+                    ResizeSize = new Size(0, 0);
+                }
+            }
+        }
+
+        #endregion Properties(Serialize)
+
         #endregion Properties
 
         #region Constructor
+
+        /// <summary>
+        /// デフォルトコンストラクタ
+        /// </summary>
+        public RecordingSetting()
+        {
+        }
 
         /// <summary>
         /// コンストラクタ

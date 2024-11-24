@@ -127,18 +127,24 @@ namespace ScreenCaptureTool.Windows
             {
                 Setting.Type = RecordingSetting.RecordingType.ScreenRect;
                 Setting.LocationFixed = checkBoxFixedPos.IsChecked ?? false;
-                Setting.Location = new System.Drawing.Point(ParseInt(textBoxWindowPosX.Text), ParseInt(textBoxWindowPosY.Text));
+                Setting.Location = new System.Drawing.Point(ParseInt(textBoxWindowPosX.Text),
+                                                            ParseInt(textBoxWindowPosY.Text));
                 Setting.SizeFixed = checkBoxFixedSize.IsChecked ?? false;
-                Setting.Size = new System.Drawing.Size(ParseInt(textBoxWindowWidth.Text), ParseInt(textBoxWindowHeight.Text));
+                Setting.Size = new System.Drawing.Size(ParseInt(textBoxWindowWidth.Text),
+                                                       ParseInt(textBoxWindowHeight.Text));
             }
 
             // 縁トリミング
             Setting.TrimEdgeEnabled = checkBoxTrimEdge.IsChecked ?? false;
-            Setting.TrimEdgeInset = new EdgeInsets(ParseInt(textBoxTrimTop.Text), ParseInt(textBoxTrimBottom.Text), ParseInt(textBoxTrimLeft.Text), int.Parse(textBoxTrimRight.Text));
+            Setting.TrimEdgeInset = new EdgeInsets(ParseInt(textBoxTrimTop.Text),
+                                                   ParseInt(textBoxTrimLeft.Text),
+                                                   ParseInt(textBoxTrimBottom.Text),
+                                                   ParseInt(textBoxTrimRight.Text));
 
             // リサイズ
             Setting.ResizeEnabled = checkBoxResize.IsChecked ?? false;
-            Setting.ResizeSize = new System.Drawing.Size(ParseInt(textBoxResizeWidth.Text), ParseInt(textBoxResizeHeight.Text));
+            Setting.ResizeSize = new System.Drawing.Size(ParseInt(textBoxResizeWidth.Text),
+                                                         ParseInt(textBoxResizeHeight.Text));
 
             // 保存形式
             if (radioButtonSaveClipboard.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.Clipboard;

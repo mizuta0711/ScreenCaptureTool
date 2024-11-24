@@ -94,29 +94,29 @@ namespace ScreenCaptureTool.Windows
         /// <summary>
         /// プロジェクト設定をUIに反映
         /// </summary>
-        /// <param name="settings">プロジェクト設定</param>
-        private void LoadProjectSettings(ProjectSetting settings)
+        /// <param name="setting">プロジェクト設定</param>
+        private void LoadProjectSettings(ProjectSetting setting)
         {
             // サムネイルサイズ
-            if (settings.ThumbnailSize > 0)
+            if (setting.ThumbnailSize > 0)
             {
-                thumbnailSize = settings.ThumbnailSize;
+                thumbnailSize = setting.ThumbnailSize;
             }
 
             // ウィンドウの位置とサイズを設定
-            if (settings.WindowTop >= 0 && settings.WindowLeft >= 0)
+            if (setting.WindowTop >= 0 && setting.WindowLeft >= 0)
             {
-                Top = settings.WindowTop;
-                Left = settings.WindowLeft;
+                Top = setting.WindowTop;
+                Left = setting.WindowLeft;
             }
-            if (settings.WindowWidth > 0 && settings.WindowHeight > 0)
+            if (setting.WindowWidth > 0 && setting.WindowHeight > 0)
             {
-                Width = settings.WindowWidth;
-                Height = settings.WindowHeight;
+                Width = setting.WindowWidth;
+                Height = setting.WindowHeight;
             }
 
             // 保存先フォルダ
-            saveFolderPath = settings.SaveFolderPath;
+            saveFolderPath = setting.SaveFolderPath;
 
             // 保存先フォルダをツリーから選択状態にする
             FolderTreeView.SelectFolderInTree(saveFolderPath);
@@ -130,25 +130,26 @@ namespace ScreenCaptureTool.Windows
             }
 
             // 画像一覧を読み込む
-            RecordingSettings.Add(new RecordingSetting("フルHD", new ManualScreenRectCaptureItem(new System.Drawing.Size(1980, 1280))));
-            RecordingSettings.Add(new RecordingSetting("タイトル", new WindowTitleCaptureItem("画面キャプチャーツール")));
+            RecordingSettings = setting.RecordingSettings;
         }
 
         /// <summary>
         /// UIの設定をプロジェクト設定に保存する
         /// </summary>
-        /// <param name="settings">プロジェクト設定</param>
-        private void StoreProjectSettings(ProjectSetting settings)
+        /// <param name="setting">プロジェクト設定</param>
+        private void StoreProjectSettings(ProjectSetting setting)
         {
             // ウィンドウの位置とサイズ
-            settings.WindowTop = Top;
-            settings.WindowLeft = Left;
-            settings.WindowWidth = Width;
-            settings.WindowHeight = Height;
+            setting.WindowTop = Top;
+            setting.WindowLeft = Left;
+            setting.WindowWidth = Width;
+            setting.WindowHeight = Height;
             // サムネイルサイズ
-            settings.ThumbnailSize = thumbnailSize;
+            setting.ThumbnailSize = thumbnailSize;
             // 保存先フォルダ
-            settings.SaveFolderPath = saveFolderPath;
+            setting.SaveFolderPath = saveFolderPath;
+            // 撮影設定
+            setting.RecordingSettings = RecordingSettings;
         }
 
         /// <summary>

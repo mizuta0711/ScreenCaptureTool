@@ -8,7 +8,6 @@ namespace ScreenCaptureTool.Models
     /// <summary>
     /// プロジェクトの設定を保持するクラス
     /// </summary>
-    [Serializable]
     public class ProjectSetting
     {
         #region Properties
@@ -51,7 +50,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// 撮影設定一覧
         /// </summary>
-        //public ObservableCollection<RecordingSetting> RecordingSettings;
+        public ObservableCollection<RecordingSetting> RecordingSettings;
 
         #endregion Properties
 
@@ -69,7 +68,7 @@ namespace ScreenCaptureTool.Models
 
             ThumbnailSize = 200;
             SaveFolderPath = Environment.CurrentDirectory;
-            //RecordingSettings = new ObservableCollection<RecordingSetting>();
+            RecordingSettings = new ObservableCollection<RecordingSetting>();
 
             FilePath = Path.Combine(Environment.CurrentDirectory, "ScreenCaptureTool.scp");
         }
