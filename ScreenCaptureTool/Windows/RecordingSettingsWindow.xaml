@@ -1,11 +1,11 @@
 ﻿<Window
-    x:Class="ScreenCaptureTool.Windows.CaptureSettingsWindow"
+    x:Class="ScreenCaptureTool.Windows.RecordingSettingsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:ScreenCaptureTool.Windows.Controls"
     Title="撮影設定"
     Width="460"
-    Height="495"
+    Height="520"
     WindowStartupLocation="CenterOwner">
     <StackPanel Margin="10" Orientation="Vertical">
         <!--  設定名称  -->
@@ -369,7 +369,8 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Content="クリップボード"
-                    GroupName="SaveTo" />
+                    GroupName="SaveTo"
+                    Checked="RefreshUIControls" />
                 <RadioButton
                     x:Name="radioButtonSaveBMP"
                     Width="150"
@@ -378,7 +379,8 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Content="ファイル(BMP形式)"
-                    GroupName="SaveTo" />
+                    GroupName="SaveTo"
+                    Checked="RefreshUIControls" />
             </StackPanel>
             <StackPanel Orientation="Vertical">
                 <RadioButton
@@ -388,7 +390,8 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Content="ファイル(PNG形式)"
-                    GroupName="SaveTo" />
+                    GroupName="SaveTo"
+                    Checked="RefreshUIControls" />
                 <RadioButton
                     x:Name="radioButtonSaveJPEG"
                     Width="150"
@@ -397,8 +400,18 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Content="ファイル(JPEG形式)"
-                    GroupName="SaveTo" />
+                    GroupName="SaveTo"
+                    Checked="RefreshUIControls" />
             </StackPanel>
+        </StackPanel>
+        <StackPanel
+            Margin="70,5,0,0"
+            Orientation="Horizontal">
+            <CheckBox
+                x:Name="checkBoxConfirmOverrideFile"
+                Height="20"
+                HorizontalAlignment="Left"
+                Content="ファイルへの保存時に、上書き確認ダイアログを表示する" />
         </StackPanel>
 
         <!--  OK/キャンセルボタン  -->
@@ -417,7 +430,7 @@
                 Width="75"
                 Margin="20,0,0,0"
                 Click="CancelButton_Click"
-                Content="Cancel" />
+                Content="キャンセル" />
         </StackPanel>
     </StackPanel>
 </Window>

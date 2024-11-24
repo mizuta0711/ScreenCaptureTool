@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using ScreenCaptureTool.Models;
+using System.Windows.Interop;
 
 namespace ScreenCaptureTool.Utilities
 {
@@ -72,12 +70,14 @@ namespace ScreenCaptureTool.Utilities
         }
 
         /// <summary>
-        /// BitmapをPNG形式で保存する
+        /// Bitmapを保存する
         /// </summary>
         /// <param name="bitmap">Bitmap</param>
         /// <param name="filePath">保存先のパス</param>
+        /// <param name="saveType">保存形式</param>
+        /// <param name="confirm">上書き確認を行うか</param>
         /// <returns>true: 保存 / false: 失敗</returns>
-        internal static bool SaveBitmapAsPng(Bitmap bitmap, string filePath)
+        internal static bool SaveToFile(Bitmap bitmap, string filePath, RecordingSettings.ImageSaveType saveType, bool confirm)
         {
             // フォルダが存在しない場合は作成する
             if (!Directory.Exists(Path.GetDirectoryName(filePath)))
@@ -89,7 +89,7 @@ namespace ScreenCaptureTool.Utilities
             }
 
             // ファイルが既に存在する場合、上書き確認ダイアログを表示
-            if (File.Exists(filePath))
+            if (confirm && File.Exists(filePath))
             {
                 var result = MessageBox.Show(
                     "このファイルは既に存在します。上書きしますか？",
@@ -104,9 +104,45 @@ namespace ScreenCaptureTool.Utilities
                 }
             }
 
-            // PNGとして保存
-            bitmap.Save(filePath, ImageFormat.Png);
-            return true;
+            // 指定された形式で保存
+            switch (saveType)
+            {
+                case RecordingSettings.ImageSaveType.FilePNG:
+                    bitmap.Save(filePath, ImageFormat.Png);
+                    return true;
+
+                case RecordingSettings.ImageSaveType.FileBMP:
+                    bitmap.Save(filePath, ImageFormat.Bmp);
+                    return true;
+
+                case RecordingSettings.ImageSaveType.FileJPEG:
+                    bitmap.Save(filePath, ImageFormat.Jpeg);
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// クリップボードにBitmapをコピー
+        /// </summary>
+        /// <param name="bitmap">Bitmap</param>
+        internal static void CopyToClipboard(Bitmap bitmap)
+        {
+            IntPtr hBitmap = bitmap.GetHbitmap(); // HBitmap を取得
+            try
+            {
+                // HBitmap を BitmapSource に変換
+                var bitmapSource = Imaging.CreateBitmapSourceFromHBitmap(hBitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+
+                // クリップボードに画像をコピー
+                Clipboard.SetImage(bitmapSource);
+            }
+            finally
+            {
+                // HBitmap のリソースを解放
+                Win32API.DeleteObject(hBitmap);
+            }
         }
 
         #endregion Methods(Static)

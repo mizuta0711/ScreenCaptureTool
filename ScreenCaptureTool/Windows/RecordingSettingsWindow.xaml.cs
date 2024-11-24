@@ -8,9 +8,9 @@ using static ScreenCaptureTool.Models.RecordingSettings;
 namespace ScreenCaptureTool.Windows
 {
     /// <summary>
-    /// CaptureSettingsWindow.xaml の相互作用ロジック
+    /// RecordingSettingsWindow.xaml の相互作用ロジック
     /// </summary>
-    public partial class CaptureSettingsWindow : Window
+    public partial class RecordingSettingsWindow : Window
     {
         #region Properties
 
@@ -20,7 +20,7 @@ namespace ScreenCaptureTool.Windows
 
         #region Constructors
 
-        public CaptureSettingsWindow()
+        public RecordingSettingsWindow()
         {
             InitializeComponent();
 
@@ -83,6 +83,9 @@ namespace ScreenCaptureTool.Windows
             radioButtonSaveBMP.IsChecked = setting.SaveType == RecordingSettings.ImageSaveType.FileBMP;
             radioButtonSaveJPEG.IsChecked = setting.SaveType == RecordingSettings.ImageSaveType.FileJPEG;
 
+            // 保存形式：ファイルの上書き確認
+            checkBoxConfirmOverrideFile.IsChecked = setting.ConfirmOverrideFile;
+
             // UIコントロールの更新
             RefreshUIControls();
         }
@@ -131,6 +134,9 @@ namespace ScreenCaptureTool.Windows
             if (radioButtonSaveBMP.IsChecked == true) Settings.SaveType = RecordingSettings.ImageSaveType.FileBMP;
             if (radioButtonSaveJPEG.IsChecked == true) Settings.SaveType = RecordingSettings.ImageSaveType.FileJPEG;
 
+            // 保存形式：ファイルの上書き確認
+            Settings.ConfirmOverrideFile = checkBoxConfirmOverrideFile.IsChecked ?? false;
+
             return Settings;
         }
 
@@ -159,6 +165,9 @@ namespace ScreenCaptureTool.Windows
             // 加工
             trimEdgePanel.IsEnabled = checkBoxTrimEdge.IsChecked ?? false;
             resizePanel.IsEnabled = checkBoxResize.IsChecked ?? false;
+
+            // 上書き確認
+            checkBoxConfirmOverrideFile.IsEnabled = (radioButtonSaveClipboard.IsChecked ?? true) ? false : true;
         }
 
         #region Methods(Event)
@@ -178,7 +187,7 @@ namespace ScreenCaptureTool.Windows
         {
             // 変更内容を反映
             SaveSettings();
-            
+
             DialogResult = true;          // ダイアログを閉じて結果を返す
             Close();
         }

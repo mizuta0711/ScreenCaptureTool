@@ -358,6 +358,13 @@ namespace ScreenCaptureTool.Windows
         /// <returns>true: 成功 / false: 失敗</returns>
         private bool SaveCaptureImage(Bitmap bitmap)
         {
+            if (recordingSettings.SaveType == RecordingSettings.ImageSaveType.Cipboard)
+            {
+                // クリップボードにコピー
+                BitmapHelper.CopyToClipboard(bitmap);
+                return true;
+            }
+
             // ComboBoxから選択または入力されたファイル名を取得
             string selectedFileName = FileNameComboBox.Text.Trim();
             if (string.IsNullOrEmpty(selectedFileName))
@@ -368,9 +375,9 @@ namespace ScreenCaptureTool.Windows
 
             try
             {
-                // PNGで保存
-                string filePath = CreateFilePath(saveFolderPath, selectedFileName);
-                if (BitmapHelper.SaveBitmapAsPng(bitmap, filePath) == false)
+                // 画像ファイルに保存
+                string filePath = CreateFilePath(saveFolderPath, selectedFileName, recordingSettings.FileExtension);
+                if (BitmapHelper.SaveToFile(bitmap, filePath, recordingSettings.SaveType, recordingSettings.ConfirmOverrideFile) == false)
                 {
                     return false;
                 }
@@ -614,7 +621,7 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void SettingButton_Click(object sender, RoutedEventArgs e)
         {
-            CaptureSettingsWindow dialog = new CaptureSettingsWindow();
+            RecordingSettingsWindow dialog = new RecordingSettingsWindow();
             dialog.Owner = this;    // 現在のウィンドウを親に設定
             dialog.LoadSettings(recordingSettings);
             if (dialog.ShowDialog() == true)
@@ -630,7 +637,8 @@ namespace ScreenCaptureTool.Windows
             try
             {
                 // ファイル名が未入力の場合はエラー
-                if (string.IsNullOrEmpty(FileNameComboBox.Text))
+                if (recordingSettings.SaveType != RecordingSettings.ImageSaveType.Clipboard &&
+                    string.IsNullOrEmpty(FileNameComboBox.Text))
                 {
                     ShowErrorDialog("ファイル名を入力してください。");
                     return;

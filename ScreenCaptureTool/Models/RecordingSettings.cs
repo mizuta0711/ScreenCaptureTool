@@ -125,6 +125,11 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         public ImageSaveType SaveType { get; set; } = ImageSaveType.FilePNG;
 
+        /// <summary>
+        /// ファイルの上書き確認
+        /// </summary>
+        public bool ConfirmOverrideFile { get; set; } = true;
+
         #endregion Properties
 
         #region Constructor
@@ -160,6 +165,30 @@ namespace ScreenCaptureTool.Models
                 Location = new Point(screenRectCaptureItem.TargetRect.Left, screenRectCaptureItem.TargetRect.Top);
                 SizeFixed = screenRectCaptureItem.SizeFixed;
                 Size = new Size(screenRectCaptureItem.TargetRect.Width, screenRectCaptureItem.TargetRect.Height);
+            }
+        }
+
+        /// <summary>
+        /// 画像保存形式に対応するファイル拡張子を取得
+        /// </summary>
+        public string FileExtension
+        {
+            get
+            {
+                switch (SaveType)
+                {
+                    case ImageSaveType.FilePNG:
+                        return "png";
+
+                    case ImageSaveType.FileBMP:
+                        return "bmp";
+
+                    case ImageSaveType.FileJPEG:
+                        return "jpg";
+
+                    default:
+                        return "";
+                }
             }
         }
 
