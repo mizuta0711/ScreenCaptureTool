@@ -22,6 +22,14 @@
                 <MenuItem Header="終了 (_X)"
                         Click="OnExitMenu_Clicked" />
             </MenuItem>
+            <MenuItem Header="表示 (_D)">
+                <MenuItem x:Name="ThumbnailSizeMenu" Header="サムネイルサイズ">
+                    <MenuItem Header="特大" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="200" />
+                    <MenuItem Header="大" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="150" />
+                    <MenuItem Header="中" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="100" />
+                    <MenuItem Header="小" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="50" />
+                </MenuItem>
+            </MenuItem>
         </Menu>
 
         <Grid Margin="0, 20, 0, 0">
@@ -35,33 +43,13 @@
             <!-- 上部の設定UI -->
             <StackPanel Grid.Row="0"
                     Orientation="Vertical">
-                <!-- 保存先フォルダ -->
-                <StackPanel Orientation="Horizontal"
-                        Width="780"
-                        Margin="10,10,10,10">
-                    <TextBlock x:Name="SelectedFolderLabel"
-                            Text="フォルダ: "
-                            Margin="0,0,0,0"
-                            VerticalAlignment="Center" />
-                    <TextBox x:Name="SelectedFolderTextBox"
-                            Text=""
-                            Width="660"
-                            Margin="10,0,10,0"
-                            VerticalAlignment="Center"
-                            TextWrapping="Wrap"
-                            IsReadOnly="True" />
-                    <Button Content="選択"
-                            Width="50"
-                            Height="30"
-                            Click="SelectFolderButton_Click" />
-                </StackPanel>
 
                 <StackPanel Orientation="Horizontal"
                         Margin="10,0,10,0">
 
                     <StackPanel>
                         <!-- ファイル名 -->
-                        <TextBlock Text="保存ファイル名:"
+                        <TextBlock Text="設定名:"
                                 FontWeight="Bold"
                                 VerticalAlignment="Center" />
                         <ComboBox x:Name="FileNameComboBox"
@@ -86,30 +74,6 @@
                                     Click="CaptureButton_Click"
                                     Margin="10,0,0,0" />
                         </StackPanel>
-                    </StackPanel>
-
-                    <StackPanel Orientation="Horizontal">
-                        <!-- サムネイルサイズ選択 -->
-                        <TextBlock Text="サムネイルサイズ:"
-                            Height="20"
-                            VerticalAlignment="Bottom"
-                            Margin="20,0,0,0" />
-                        <ComboBox x:Name="ThumbnailSizeComboBox"
-                            Width="50"
-                            Height="25"
-                            VerticalAlignment="Bottom"
-                            SelectionChanged="ThumbnailSizeComboBox_SelectionChanged"
-                            Margin="10,0,0,0">
-                            <ComboBoxItem Content="特大"
-                                Tag="500" />
-                            <ComboBoxItem Content="大"
-                                Tag="300" />
-                            <ComboBoxItem Content="中"
-                                Tag="200"
-                                IsSelected="True" />
-                            <ComboBoxItem Content="小"
-                                Tag="100" />
-                        </ComboBox>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
@@ -150,22 +114,36 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Vertical"
-                                        Margin="10">
-                                    <Image Source="{Binding Thumbnail}"
-                                            Width="{Binding ThumbnailWidth}"
-                                            Height="{Binding ThumbnailHeight}"
-                                            Stretch="Uniform"
-                                            MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown">
-                                        <Image.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="削除"
+                                <StackPanel Orientation="Vertical" Margin="10">
+                                    <Border BorderThickness="2"
+                                            CornerRadius="5">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                <Setter Property="Background" Value="White" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="Blue" />
+                                                        <Setter Property="Background" Value="#DCE6F1" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <Image Source="{Binding Thumbnail}"
+                                               Width="{Binding ThumbnailWidth}"
+                                               Height="{Binding ThumbnailHeight}"
+                                               Stretch="Uniform"
+                                               MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown">
+                                            <Image.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="削除"
                                                         Click="DeleteMenuItem_Click" />
-                                            </ContextMenu>
-                                        </Image.ContextMenu>
-                                    </Image>
+                                                </ContextMenu>
+                                            </Image.ContextMenu>
+                                        </Image>
+                                    </Border>
                                     <TextBlock Text="{Binding FileName}"
-                                            HorizontalAlignment="Center" />
+                                               HorizontalAlignment="Center" />
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

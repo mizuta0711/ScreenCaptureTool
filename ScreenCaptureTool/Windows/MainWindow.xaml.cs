@@ -121,15 +121,19 @@ namespace ScreenCaptureTool.Windows
             // 保存先フォルダ
             saveFolderPath = settings.SaveFolderPath;
 
-            // UIに反映
-            // 保存先フォルダ名
-            SelectedFolderTextBox.Text = saveFolderPath;
-
             // ファイル一覧
             FileNameComboBox.ItemsSource = SaveFileNames;
 
             // 保存先フォルダをツリーから選択状態にする
             FolderTreeView.SelectFolderInTree(saveFolderPath);
+
+            // サムネイルサイズメニューのチェックを設定
+            var menuItems = ThumbnailSizeMenu.Items.Cast<MenuItem>();
+            var defaultItem = menuItems.FirstOrDefault(item => int.Parse((string)item.Tag) == thumbnailSize);
+            if (defaultItem != null)
+            {
+                defaultItem.IsChecked = true;
+            }
         }
 
         /// <summary>
@@ -358,7 +362,7 @@ namespace ScreenCaptureTool.Windows
         /// <returns>true: 成功 / false: 失敗</returns>
         private bool SaveCaptureImage(Bitmap bitmap)
         {
-            if (recordingSettings.SaveType == RecordingSettings.ImageSaveType.Cipboard)
+            if (recordingSettings.SaveType == RecordingSettings.ImageSaveType.Clipboard)
             {
                 // クリップボードにコピー
                 BitmapHelper.CopyToClipboard(bitmap);
@@ -486,6 +490,41 @@ namespace ScreenCaptureTool.Windows
             }
         }
 
+        /// <summary>
+        /// サムネイル画像を選択状態にする
+        /// </summary>
+        /// <param name="selectedImageFile">選択したImageFile</param>
+        private void SelectImageFile(ImageFile selectedImageFile)
+        {
+            // 他のアイテムをすべて非選択にする
+            foreach (var item in ThumbnailItemsControl.ItemsSource)
+            {
+                if (item is ImageFile imageFile)
+                {
+                    imageFile.IsSelected = false;
+                }
+            }
+
+            // クリックされたアイテムを選択状態にする
+            selectedImageFile.IsSelected = true;
+        }
+
+        /// <summary>
+        /// サムネイル画像を開く
+        /// </summary>
+        /// <param name="imageFile">サムネイル画像</param>
+        private void OpenThumbnailImage(ImageFile imageFile)
+        {
+            // フルパスをProcess.Startに渡す
+            string fullPath = Path.Combine(saveFolderPath, imageFile.FileName ?? "");
+
+            // フォトアプリで画像を開く
+            Process.Start(new ProcessStartInfo(fullPath)
+            {
+                UseShellExecute = true // 既定のアプリケーションで開く
+            });
+        }
+
         #endregion Thumbnails
 
         #region FolderTreeView
@@ -498,9 +537,6 @@ namespace ScreenCaptureTool.Windows
         {
             // 保存先フォルダを変更
             saveFolderPath = folderPath;
-
-            // UIに表示
-            SelectedFolderTextBox.Text = folderPath;
 
             // 選択されたフォルダの一覧を表示
             LoadImagesFromFolder();
@@ -532,7 +568,6 @@ namespace ScreenCaptureTool.Windows
         /// <summary>
         /// 上書き保存：メニュー
         /// </summary>
-
         private void OnSaveProjectMenu_Clicked(object sender, RoutedEventArgs e)
         {
             if (projectSettings.FilePath != null)
@@ -568,6 +603,33 @@ namespace ScreenCaptureTool.Windows
             Close();
         }
 
+        /// <summary>
+        /// 表示：サムネイルサイズメニュー
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ThumbnailSizeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            // 全てのサイズメニューのチェックを解除
+            foreach (var menuItem in ((MenuItem)((MenuItem)sender).Parent).Items)
+            {
+                if (menuItem is MenuItem item)
+                {
+                    item.IsChecked = false;
+                }
+            }
+
+            // クリックされた項目をチェックし、サムネイルサイズを設定
+            var selectedItem = sender as MenuItem;
+            if (selectedItem != null)
+            {
+                selectedItem.IsChecked = true;
+                // メニューのTagからサイズを取得
+                thumbnailSize = int.Parse((string)selectedItem.Tag);
+                UpdateThumbnailsSize();  // サイズ変更後にサムネイル更新
+            }
+        }
+
         #endregion Events(Menu)
 
         #region Events(FolderTreeView)
@@ -600,19 +662,6 @@ namespace ScreenCaptureTool.Windows
                 {
                     SelectCurrentFolder(dialog.SelectedPath);
                 }
-            }
-        }
-
-        /// <summary>
-        /// サムネイルサイズ変更のコンボボックス：選択変更
-        /// </summary>
-        private void ThumbnailSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ThumbnailSizeComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                // ComboBoxのTagからサイズを取得
-                thumbnailSize = int.Parse((string)selectedItem.Tag);
-                UpdateThumbnailsSize();  // サイズ変更後にサムネイル更新
             }
         }
 
@@ -679,25 +728,29 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void Thumbnail_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // ダブルクリックかどうかを確認
-            if (e.ClickCount == 2)
+            // ダブルクリック：画像を開く
+            if (sender is System.Windows.Controls.Image image)
             {
-                // サムネイルのイメージを取得
-                var image = sender as System.Windows.Controls.Image;
-                if (image != null)
+                if (image.DataContext is ImageFile clickedItem)
                 {
-                    // バインドされた ImageFile オブジェクトを取得
-                    var selectedImageFile = image.DataContext as ImageFile;
-                    if (selectedImageFile != null)
+                    switch (e.ClickCount)
                     {
-                        // フルパスをProcess.Startに渡す
-                        string fullPath = Path.Combine(saveFolderPath, selectedImageFile.FileName);
+                        case 1:
+                            // サムネイル画像を選択
+                            SelectImageFile(clickedItem);
 
-                        // フォトアプリで画像を開く
-                        Process.Start(new ProcessStartInfo(fullPath)
-                        {
-                            UseShellExecute = true // 既定のアプリケーションで開く
-                        });
+                            // 選択したファイルのファイル名を設定
+                            // ファイル名から拡張子を取り除く
+                            FileNameComboBox.Text = Path.GetFileNameWithoutExtension(clickedItem.FileName);
+                            break;
+
+                        case 2:
+                            // ダブルクリック：画像を開く
+                            OpenThumbnailImage(clickedItem);
+                            break;
+
+                        default:
+                            break;
                     }
                 }
             }
@@ -714,6 +767,7 @@ namespace ScreenCaptureTool.Windows
             var imageFile = menuItem.DataContext as ImageFile;
 
             if (imageFile == null) return;
+            if (imageFile.FileName == null) return;
 
             string filePath = Path.Combine(saveFolderPath, imageFile.FileName);
 
@@ -734,7 +788,7 @@ namespace ScreenCaptureTool.Windows
                     // リストから削除
                     ImageFiles.Remove(imageFile);
 
-                    ShowInformationDialog("ファイルはゴミ箱に移動されました。");
+                    // ShowInformationDialog("ファイルはゴミ箱に移動されました。");
                 }
                 catch (Exception ex)
                 {

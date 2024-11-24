@@ -11,14 +11,19 @@ namespace ScreenCaptureTool.Models
         #region Variables
 
         /// <summary>
+        /// 選択状態
+        /// </summary>
+        private bool isSelected;
+
+        /// <summary>
         /// ファイル名
         /// </summary>
-        private string fileName;
+        private string? fileName;
 
         /// <summary>
         /// 画像イメージ
         /// </summary>
-        private BitmapImage thumbnail;
+        private BitmapImage? thumbnail;
 
         /// <summary>
         /// サムネイル画像：幅
@@ -33,16 +38,29 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// 値変更のイベントハンドラ
         /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         #endregion Variables
 
         #region Properties
 
         /// <summary>
+        /// 選択状態
+        /// </summary>
+        public bool IsSelected
+        {
+            get => isSelected;
+            set
+            {
+                isSelected = value;
+                OnPropertyChanged(nameof(IsSelected));
+            }
+        }
+
+        /// <summary>
         /// ファイル名
         /// </summary>
-        public string FileName
+        public string? FileName
         {
             get => fileName;
             set
@@ -58,7 +76,7 @@ namespace ScreenCaptureTool.Models
         /// <summary>
         /// 画像イメージ
         /// </summary>
-        public BitmapImage Thumbnail
+        public BitmapImage? Thumbnail
         {
             get => thumbnail;
             set
