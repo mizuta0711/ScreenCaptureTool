@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ScreenCaptureTool.Windows.Controls
@@ -8,6 +9,30 @@ namespace ScreenCaptureTool.Windows.Controls
     /// </summary>
     public class NumericTextBox : TextBox
     {
+        public NumericTextBox()
+        {
+            // フォーカス時にテキストを全選択
+            GotFocus += SelectAllOnFocus;
+
+            // マウスクリック時にフォーカスをセットし全選択
+            PreviewMouseDown += SelectAllOnMouseDown;
+        }
+
+        private void SelectAllOnFocus(object sender, RoutedEventArgs e)
+        {
+            this.SelectAll();
+        }
+
+        private void SelectAllOnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (!IsKeyboardFocusWithin) // 既にフォーカスがある場合は処理しない
+            {
+                e.Handled = true; // 既定のマウス動作を抑制
+                Focus(); // フォーカスをセット
+                SelectAll(); // 全選択
+            }
+        }
+    
         protected override void OnPreviewTextInput(TextCompositionEventArgs e)
         {
             base.OnPreviewTextInput(e);
