@@ -32,7 +32,7 @@
             </MenuItem>
         </Menu>
 
-        <Grid Margin="0, 20, 0, 0">
+        <Grid Margin="0,20,0,0">
             <Grid.RowDefinitions>
                 <!-- 上部の設定エリア -->
                 <RowDefinition Height="Auto" />
@@ -41,53 +41,73 @@
             </Grid.RowDefinitions>
 
             <!-- 上部の設定UI -->
-            <StackPanel Grid.Row="0"
-                        Height="150"
-                        Orientation="Vertical">
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel>
-                        <ListView Height="150"
-                                  ItemsSource="{Binding RecordingSettings}"
-                                  SelectionChanged="SettingListView_SelectionChanged">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="名前" DisplayMemberBinding="{Binding Name}" Width="100" />
-                                    <GridViewColumn Header="タイプ" DisplayMemberBinding="{Binding Type}" Width="100" />
-                                    <GridViewColumn Header="保存方法" DisplayMemberBinding="{Binding SaveType}" Width="100" />
-                                    <GridViewColumn Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+            <Grid>
+                <!-- 行と列を定義 -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <!-- 必要に応じて変更 -->
+                    <RowDefinition Height="*" />
+                    <!-- 可変 -->
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <!-- リストビューが可変 -->
+                    <ColumnDefinition Width="155" />
+                    <!-- ボタンの固定幅 -->
+                </Grid.ColumnDefinitions>
+
+                <!-- 撮影設定一覧 -->
+                <ListView x:Name="listViewRecoringSetting"
+                          Grid.Row="1"
+                          Grid.Column="0"
+                          ItemsSource="{Binding RecordingSettings}"
+                          MouseDoubleClick="RecordingSettingList_MouseDoubleClick">
+                    <ListView.ContextMenu>
+                        <ContextMenu Opened="RecordingSettingListViewMenu_Opened">
+                            <MenuItem Header="追加" Click="AddSettingMenuItem_Click" />
+                            <MenuItem Header="編集" x:Name="MenuItemEdit" Click="EditSettingMenuItem_Click" />
+                            <MenuItem Header="削除" x:Name="MenuItemDelete" Click="DeleteSettingMenuItem_Click" />
+                        </ContextMenu>
+                    </ListView.ContextMenu>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="名前" DisplayMemberBinding="{Binding Name}" Width="100" />
+                            <GridViewColumn Header="タイプ" DisplayMemberBinding="{Binding Type}" Width="100" />
+                            <GridViewColumn Header="保存方法" DisplayMemberBinding="{Binding SaveType}" Width="100" />
+                            <GridViewColumn Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <!-- ボタン群 -->
+                <StackPanel Grid.Row="1"
+                            Grid.Column="1"
+                            Orientation="Vertical">
+                    <!-- 上部の編集・追加ボタン -->
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Button x:Name="buttonEditSetting"
+                                Content="編集"
+                                Width="70"
+                                Height="25"
+                                Click="EditSettingButton_Click"
+                                Margin="0,0,0,0" />
+                        <Button x:Name="buttonAddSetting"
+                                Content="追加"
+                                Width="70"
+                                Height="25"
+                                Click="AddSettingButton_Click"
+                                Margin="5,0,0,0" />
                     </StackPanel>
 
-                    <StackPanel>
-                        <!-- 撮影ボタン -->
-                        <StackPanel Orientation="Horizontal"
-                                    Margin="10,0,0,10">
-                            <StackPanel Orientation="Vertical">
-                                <Button x:Name="buttonAddSetting"
-                                        Content="追加"
-                                        Width="70"
-                                        Height="25"
-                                        Click="AddSettingButton_Click"
-                                        Margin="0,0,0,0" />
-                                <Button x:Name="buttonEditSetting"
-                                        Content="編集"
-                                        Width="70"
-                                        Height="25"
-                                        Click="EditSettingButton_Click"
-                                        Margin="0,5,0,0" />
-                            </StackPanel>
-                            <Button x:Name="buttonCapture"
-                                    Content="撮影"
-                                    Width="100"
-                                    Height="100"
-                                    Click="CaptureButton_Click"
-                                    Margin="10,0,0,0" />
-                        </StackPanel>
-                    </StackPanel>
+                    <!-- 撮影ボタン -->
+                    <Button x:Name="buttonCapture"
+                            Content="撮影"
+                            Width="145"
+                            Height="145"
+                            Click="CaptureButton_Click"
+                            Margin="0,5,0,0" />
                 </StackPanel>
-            </StackPanel>
+            </Grid>
 
             <!-- 下部のサムネイル表示エリア -->
             <Grid Grid.Row="1">

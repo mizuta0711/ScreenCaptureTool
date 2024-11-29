@@ -48,7 +48,17 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private ProjectSetting projectSettings = new ProjectSetting();
 
-        private RecordingSetting? CurrentSetting;
+        private RecordingSetting? CurrentSetting
+        {
+            get
+            {
+                if (listViewRecoringSetting.SelectedItem is RecordingSetting selectedSetting)
+                {
+                    return selectedSetting;
+                }
+                return null;
+            }
+        }
 
         #endregion Variable
 
@@ -72,7 +82,7 @@ namespace ScreenCaptureTool.Windows
 
         #region Methods
 
-        #region Events(Window)
+        #region Methods(Override)
 
         /// <summary>
         /// ウィンドウが閉じられた：ウィンドウの位置とサイズを保存する
@@ -85,11 +95,84 @@ namespace ScreenCaptureTool.Windows
             SaveProjectFile(projectSettings);
         }
 
-        #endregion Events(Window)
+        #endregion Events(Override)
 
-        #region Private
+        #region Methods(Private)
 
-        #region Settings
+        #region Methods(Utility)
+
+        /// <summary>
+        /// ファイルがロックされているか
+        /// </summary>
+        /// <param name="filePath">パス</param>
+        /// <returns>true:ロックされている　/ false:ロックされていない</returns>
+        private static bool IsFileLocked(string filePath)
+        {
+            try
+            {
+                using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    // ファイルはロックされていない
+                }
+            }
+            catch (IOException)
+            {
+                // ファイルはロックされている
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// VisualTreeHelperを使って特定の型の子要素を取得する汎用メソッド
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+                else
+                {
+                    T? childOfChild = FindVisualChild<T>(child);
+                    if (childOfChild != null)
+                    {
+                        return childOfChild;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// エラーダイアログを表示する
+        /// </summary>
+        /// <param name="message">メッセージ</param>
+        /// <param name="title">タイトル</param>
+        private static void ShowErrorDialog(string message)
+        {
+            MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        /// <summary>
+        /// 情報ダイアログを表示する
+        /// </summary>
+        /// <param name="message">メッセージ</param>
+        /// <param name="title">タイトル</param>
+        private static void ShowInformationDialog(string message)
+        {
+            MessageBox.Show(message, "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        #endregion Methods(Utility)
+
+        #region Methods(ProjectSettings)
 
         /// <summary>
         /// プロジェクト設定をUIに反映
@@ -204,82 +287,74 @@ namespace ScreenCaptureTool.Windows
             return true;
         }
 
-        #endregion Settings
+        #endregion Methods(ProjectSettings)
 
-        #region Utility
+        #region Methods(RecordingSettings)
 
         /// <summary>
-        /// ファイルがロックされているか
+        /// 撮影設定一覧の右クリックメニューが開かれるとき
         /// </summary>
-        /// <param name="filePath">パス</param>
-        /// <returns>true:ロックされている　/ false:ロックされていない</returns>
-        private static bool IsFileLocked(string filePath)
+        private void RecordingSettingListViewMenu_Opened(object sender, RoutedEventArgs e)
         {
-            try
+            // 現在選択されている項目があるかをチェック
+            bool hasSelectedItem = listViewRecoringSetting.SelectedItem != null;
+
+            // 「編集」と「削除」メニューの有効/無効を切り替え
+            MenuItemEdit.IsEnabled = hasSelectedItem;
+            MenuItemDelete.IsEnabled = hasSelectedItem;
+        }
+
+        /// <summary>
+        /// 撮影設定の追加
+        /// </summary>
+        private void AddRecordingSetting()
+        {
+            RecordingSettingsWindow dialog = new RecordingSettingsWindow();
+            dialog.Owner = this;    // 現在のウィンドウを親に設定
+            if (dialog.ShowDialog() == true)
             {
-                using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
-                {
-                    // ファイルはロックされていない
-                }
+                RecordingSettings.Add(dialog.Setting);
             }
-            catch (IOException)
+        }
+
+        /// <summary>
+        /// 撮影設定の編集
+        /// </summary>
+        /// <param name="setting">撮影設定</param>
+        /// <returns>true: 編集した / false: キャンセル</returns>
+        private bool EditRecordingSetting(RecordingSetting setting)
+        {
+            RecordingSettingsWindow dialog = new RecordingSettingsWindow();
+            dialog.Owner = this;    // 現在のウィンドウを親に設定
+            dialog.LoadSettings(setting);
+            if (dialog.ShowDialog() == true)
             {
-                // ファイルはロックされている
+                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings);
+                view.Refresh();
                 return true;
             }
             return false;
         }
 
         /// <summary>
-        /// VisualTreeHelperを使って特定の型の子要素を取得する汎用メソッド
+        /// 撮影設定の削除
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="parent"></param>
-        /// <returns></returns>
-        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        /// <param name="setting">撮影設定</param>
+        /// <returns>true: 削除した / false: キャンセル</returns>
+        private bool DeleteRecordingSetting(RecordingSetting setting)
         {
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            // 確認ダイアログを表示
+            if (MessageBox.Show($"設定「{setting.Name}」を削除しますか？", "削除確認", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T typedChild)
-                {
-                    return typedChild;
-                }
-                else
-                {
-                    T? childOfChild = FindVisualChild<T>(child);
-                    if (childOfChild != null)
-                    {
-                        return childOfChild;
-                    }
-                }
+                RecordingSettings.Remove(setting);
+                return true;
             }
-            return null;
+            return false;
         }
 
-        /// <summary>
-        /// エラーダイアログを表示する
-        /// </summary>
-        /// <param name="message">メッセージ</param>
-        /// <param name="title">タイトル</param>
-        private static void ShowErrorDialog(string message)
-        {
-            MessageBox.Show(message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+        #endregion Methods(RecordingSettings)
 
-        /// <summary>
-        /// 情報ダイアログを表示する
-        /// </summary>
-        /// <param name="message">メッセージ</param>
-        /// <param name="title">タイトル</param>
-        private static void ShowInformationDialog(string message)
-        {
-            MessageBox.Show(message, "情報", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        #endregion Utility
-
-        #region CaptureTools
+        #region Methods(CaptureTools)
 
         /// <summary>
         /// ファイルのフルパスを作成
@@ -401,9 +476,9 @@ namespace ScreenCaptureTool.Windows
             }
         }
 
-        #endregion CaptureTools
+        #endregion Methods(CaptureTools)
 
-        #region Thumbnails
+        #region Methods(Thumbnails)
 
         /// <summary>
         /// 保存先フォルダの画像一覧を取得する
@@ -522,9 +597,9 @@ namespace ScreenCaptureTool.Windows
             });
         }
 
-        #endregion Thumbnails
+        #endregion Methods(Thumbnails)
 
-        #region FolderTreeView
+        #region Methods(FolderTreeView)
 
         /// <summary>
         /// カレントフォルダの変更
@@ -542,9 +617,9 @@ namespace ScreenCaptureTool.Windows
             FolderTreeView.RefreshSelectedFolderTree();
         }
 
-        #endregion FolderTreeView
+        #endregion Methods(FolderTreeView)
 
-        #endregion Private
+        #region Methods(Event)
 
         #region Events(Menu)
 
@@ -629,6 +704,51 @@ namespace ScreenCaptureTool.Windows
 
         #endregion Events(Menu)
 
+        #region Events(RecordingSettingListView)
+
+        /// <summary>
+        /// 撮影設定一覧：左ダブルクリック
+        /// </summary>
+        private void RecordingSettingList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (CurrentSetting != null)
+            {
+                EditRecordingSetting(CurrentSetting);
+            }
+        }
+
+        /// <summary>
+        /// 撮影設定一覧のコンテキストメニュー：追加
+        /// </summary>
+        private void AddSettingMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            AddRecordingSetting();
+        }
+
+        /// <summary>
+        /// 撮影設定一覧のコンテキストメニュー：編集
+        /// </summary>
+        private void EditSettingMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (listViewRecoringSetting.SelectedItem is RecordingSetting selectedSetting)
+            {
+                EditRecordingSetting(selectedSetting);
+            }
+        }
+
+        /// <summary>
+        /// 撮影設定一覧のコンテキストメニュー：削除
+        /// </summary>
+        private void DeleteSettingMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (CurrentSetting != null)
+            {
+                DeleteRecordingSetting(CurrentSetting);
+            }
+        }
+
+        #endregion Events(RecordingSettingListView)
+
         #region Events(FolderTreeView)
 
         // フォルダツリーで選択が変更されたとき
@@ -667,12 +787,7 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void AddSettingButton_Click(object sender, RoutedEventArgs e)
         {
-            RecordingSettingsWindow dialog = new RecordingSettingsWindow();
-            dialog.Owner = this;    // 現在のウィンドウを親に設定
-            if (dialog.ShowDialog() == true)
-            {
-                RecordingSettings.Add(dialog.Setting);
-            }
+            AddRecordingSetting();
         }
 
         /// <summary>
@@ -686,14 +801,7 @@ namespace ScreenCaptureTool.Windows
                 return;
             }
 
-            RecordingSettingsWindow dialog = new RecordingSettingsWindow();
-            dialog.Owner = this;    // 現在のウィンドウを親に設定
-            dialog.LoadSettings(CurrentSetting);
-            if (dialog.ShowDialog() == true)
-            {
-                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings);
-                view.Refresh();
-            }
+            EditRecordingSetting(CurrentSetting);
         }
 
         /// <summary>
@@ -817,23 +925,11 @@ namespace ScreenCaptureTool.Windows
             }
         }
 
-        /// <summary>
-        /// 撮影設定一覧の選択変更
-        /// </summary>
-        private void SettingListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // 選択されたアイテムを取得
-            if (sender is System.Windows.Controls.ListView listView)
-            {
-                if (listView.SelectedItem is RecordingSetting setting)
-                {
-                    // 選択された設定を保持
-                    CurrentSetting = setting;
-                }
-            }
-        }
-
         #endregion Events(Control)
+
+        #endregion Methods(Event)
+
+        #endregion Methods(Private)
 
         #endregion Methods
     }

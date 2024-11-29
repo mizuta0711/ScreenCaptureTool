@@ -47,6 +47,9 @@ namespace ScreenCaptureTool.Windows
             // 名称
             textBoxName.Text = setting.Name;
 
+            // 説明
+            textBoxDescription.Text = setting.Description;
+
             // 撮影方法：ウィンドウ
             radioButtonWindow.IsChecked = setting.Type == RecordingSetting.RecordingType.Window;
 
