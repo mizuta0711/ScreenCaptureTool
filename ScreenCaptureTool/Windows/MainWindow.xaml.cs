@@ -16,6 +16,7 @@ using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Utilities;
 using System.Windows.Input;
 using ScreenCaptureTool.Controllers.CaptureProvider;
+using System.Windows.Documents;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -95,7 +96,7 @@ namespace ScreenCaptureTool.Windows
             SaveProjectFile(projectSettings);
         }
 
-        #endregion Events(Override)
+        #endregion Methods(Override)
 
         #region Methods(Private)
 

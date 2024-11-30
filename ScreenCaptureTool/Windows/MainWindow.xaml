@@ -57,7 +57,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- 撮影設定一覧 -->
-                <ListView x:Name="listViewRecoringSetting"
+                <controls:RecordingSettingListView x:Name="listViewRecoringSetting"
                           Grid.Row="1"
                           Grid.Column="0"
                           ItemsSource="{Binding RecordingSettings}"
@@ -77,7 +77,7 @@
                             <GridViewColumn Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
                         </GridView>
                     </ListView.View>
-                </ListView>
+                </controls:RecordingSettingListView>
 
                 <!-- ボタン群 -->
                 <StackPanel Grid.Row="1"
