@@ -899,31 +899,7 @@ namespace ScreenCaptureTool.Windows
             if (imageFile.FileName == null) return;
 
             string filePath = Path.Combine(saveFolderPath, imageFile.FileName);
-
-            if (IsFileLocked(filePath))
-            {
-                ShowErrorDialog("ファイルがロックされているため、削除できません。");
-                return;
-            }
-
-            // 確認ダイアログを表示
-            if (MessageBox.Show($"このファイルを削除しますか？\n{filePath}", "削除確認", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            {
-                try
-                {
-                    // ファイルをゴミ箱に移動
-                    FileSystem.DeleteFile(filePath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-
-                    // リストから削除
-                    ImageFiles.Remove(imageFile);
-
-                    // ShowInformationDialog("ファイルはゴミ箱に移動されました。");
-                }
-                catch (Exception ex)
-                {
-                    ShowErrorDialog("ファイルの削除に失敗しました: " + ex.Message);
-                }
-            }
+            DeleteImageFile(filePath, true);
         }
 
         #endregion Events(Control)

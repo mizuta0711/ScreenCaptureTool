@@ -1,5 +1,4 @@
 ﻿using ScreenCaptureTool.Models;
-using ScreenCaptureTool.Models.CaptureItem;
 
 using System.Windows;
 

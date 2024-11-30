@@ -136,6 +136,37 @@ namespace ScreenCaptureTool.Models
 
         #region Properties(Serialize)
 
+        #region Properties
+
+        /// <summary>
+        /// 撮影情報を取得
+        /// </summary>
+        public string Information
+        {
+            get
+            {
+                if (Type == RecordingType.Window)
+                {
+                    return $"ウィンドウ:{WindowTitle}";
+                }
+                if (LocationFixed && SizeFixed)
+                {
+                    return $"位置:({Location.X},{Location.Y}) / サイズ:({Size.Width},{Size.Height})";
+                }
+                if (LocationFixed)
+                {
+                    return $"位置:({Location.X},{Location.Y}) / サイズ:撮影時に選択";
+                }
+                if (SizeFixed)
+                {
+                    return $"位置:撮影時に選択 / サイズ:({Size.Width},{Size.Height})";
+                }
+                return "撮影時に範囲を選択";
+            }
+        }
+
+        #endregion Properties
+
         /// <summary>
         /// シリアライズ用：ウィンドウ位置
         /// </summary>
