@@ -164,7 +164,8 @@
                                                Width="{Binding ThumbnailWidth}"
                                                Height="{Binding ThumbnailHeight}"
                                                Stretch="Uniform"
-                                               MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown">
+                                               MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown"
+                                               MouseRightButtonDown="Thumbnail_MouseRightButtonDown">
                                             <Image.ContextMenu>
                                                 <ContextMenu>
                                                     <MenuItem Header="削除"

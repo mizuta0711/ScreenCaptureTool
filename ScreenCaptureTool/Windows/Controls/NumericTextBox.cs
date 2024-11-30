@@ -11,6 +11,9 @@ namespace ScreenCaptureTool.Windows.Controls
     {
         public NumericTextBox()
         {
+            // 数字なので右寄せ
+            HorizontalContentAlignment = HorizontalAlignment.Right;
+
             // フォーカス時にテキストを全選択
             GotFocus += SelectAllOnFocus;
 
@@ -32,7 +35,7 @@ namespace ScreenCaptureTool.Windows.Controls
                 SelectAll(); // 全選択
             }
         }
-    
+
         protected override void OnPreviewTextInput(TextCompositionEventArgs e)
         {
             base.OnPreviewTextInput(e);

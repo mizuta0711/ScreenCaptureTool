@@ -4,40 +4,28 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:ScreenCaptureTool.Windows.Controls"
     Title="撮影設定"
-    Width="460"
-    Height="570"
+    Width="480"
+    Height="600"
     WindowStartupLocation="CenterOwner">
     <StackPanel Margin="10" Orientation="Vertical">
         <!--  設定名称  -->
         <StackPanel Orientation="Horizontal">
-            <TextBlock
-                Width="36"
-                Height="16"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Text="名称" />
-            <TextBox
-                x:Name="textBoxName"
-                Width="395"
-                Height="16"
-                VerticalAlignment="Top"
-                Text=""
-                TextWrapping="Wrap" />
+            <TextBlock Width="38"
+                       Text="名称" />
+            <TextBox x:Name="textBoxName"
+                     Width="400"
+                     Text=""
+                     TextWrapping="Wrap" />
         </StackPanel>
 
         <!--  説明  -->
         <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
             <TextBlock
-                Width="36"
-                Height="16"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
+                Width="38"
                 Text="説明" />
             <TextBox
                 x:Name="textBoxDescription"
-                Width="395"
-                Height="16"
-                VerticalAlignment="Top"
+                Width="400"
                 Text=""
                 TextWrapping="Wrap" />
         </StackPanel>
@@ -48,20 +36,14 @@
             Height="16"
             Margin="0,10,0,0"
             HorizontalAlignment="Left"
-            VerticalAlignment="Top"
             Text="撮影方法" />
 
         <!--  撮影方法：ウィンドウ全体  -->
-        <StackPanel
-            Height="40"
-            Margin="20,5,10,0"
-            VerticalAlignment="Top"
-            Orientation="Vertical">
+        <StackPanel Orientation="Vertical"
+                    Margin="20,5,0,0">
             <StackPanel Orientation="Horizontal">
                 <RadioButton
                     x:Name="radioButtonWindow"
-                    Height="14"
-                    HorizontalAlignment="Left"
                     Checked="RefreshUIControls"
                     Content="ウィンドウ全体"
                     GroupName="RecordingType" />
@@ -73,39 +55,27 @@
             </StackPanel>
             <StackPanel
                 x:Name="RecordingTypeWindowPanel"
-                Margin="20,10,0,0"
-                VerticalAlignment="Top"
+                Margin="20,5,0,0"
                 Orientation="Horizontal">
                 <!--  ウィンドウタイトル  -->
                 <TextBlock
-                    x:Name="labelWindowTitle"
-                    Width="82"
-                    Height="16"
-                    HorizontalAlignment="Left"
+                    Width="88"
                     VerticalAlignment="Center"
                     Text="ウィンドウタイトル" />
                 <TextBox
                     x:Name="textBoxWindowTitle"
-                    Width="300"
-                    Height="16"
-                    VerticalAlignment="Center"
+                    Width="310"
                     Text=""
                     TextWrapping="Wrap" />
             </StackPanel>
         </StackPanel>
 
         <!--  撮影方法：画面の一部  -->
-        <StackPanel
-            Height="120"
-            Margin="20,10,10,0"
-            VerticalAlignment="Top"
-            Orientation="Vertical">
+        <StackPanel Orientation="Vertical"
+                    Margin="20,10,10,0">
             <StackPanel Orientation="Horizontal">
                 <RadioButton
                     x:Name="radioButtonRectangle"
-                    Height="14"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
                     Checked="RefreshUIControls"
                     Content="画面の一部"
                     GroupName="RecordingType" />
@@ -115,116 +85,48 @@
                     FontSize="9"
                     Text="※画面内の一部を撮影します。位置、サイズを固定しない場合は撮影時に指定します" />
             </StackPanel>
-            <StackPanel
-                x:Name="RecordingTypeRectanglePanel"
-                Margin="20,10,0,0"
-                VerticalAlignment="Top"
-                Orientation="Horizontal">
-                <StackPanel
-                    Width="400"
-                    Height="85"
-                    Orientation="Vertical">
+            <StackPanel x:Name="RecordingTypeRectanglePanel"
+                        Margin="20,5,0,0"
+                        Orientation="Horizontal">
+                <StackPanel Orientation="Vertical"
+                            Width="400">
                     <!--  位置  -->
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock
-                            x:Name="labelWindowRectPos"
-                            Width="50"
-                            Height="16"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Text="位置" />
+                        <TextBlock Width="50" Text="位置" />
                         <CheckBox
                             x:Name="checkBoxFixedPos"
                             Width="80"
-                            Height="14"
-                            HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Click="RefreshUIControls"
                             Content="固定" />
                         <StackPanel x:Name="recordingPositionPanel" Orientation="Vertical">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock
-                                    x:Name="labelWindowPosX"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    Text="X座標：" />
-                                <controls:NumericTextBox
-                                    x:Name="textBoxWindowPosX"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    HorizontalContentAlignment="Right"
-                                    MaxLength="5"
-                                    Text="" />
+                                <TextBlock Width="50" Text="X座標：" />
+                                <controls:NumericTextBox x:Name="textBoxWindowPosX" Width="50" MaxLength="5" Text="" />
                             </StackPanel>
                             <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                <TextBlock
-                                    x:Name="labelWindowPosY"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    Text="Y座標：" />
-                                <controls:NumericTextBox
-                                    x:Name="textBoxWindowPosY"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    HorizontalContentAlignment="Right"
-                                    MaxLength="5"
-                                    Text="" />
+                                <TextBlock Width="50" Text="Y座標：" />
+                                <controls:NumericTextBox x:Name="textBoxWindowPosY" Width="50" MaxLength="5" Text="" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
                     <!--  サイズ  -->
                     <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
-                        <TextBlock
-                            x:Name="labelWindowRectSize"
-                            Width="50"
-                            Height="16"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Text="サイズ" />
+                        <TextBlock Width="50" Text="サイズ" />
                         <CheckBox
                             x:Name="checkBoxFixedSize"
                             Width="80"
-                            Height="14"
-                            HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Click="RefreshUIControls"
                             Content="固定" />
                         <StackPanel x:Name="recordingSizePanel" Orientation="Vertical">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock
-                                    x:Name="labelWindowWidth"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    Text="幅：" />
-                                <controls:NumericTextBox
-                                    x:Name="textBoxWindowWidth"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    HorizontalContentAlignment="Right"
-                                    MaxLength="5"
-                                    Text="" />
+                                <TextBlock Width="50" Text="幅：" />
+                                <controls:NumericTextBox x:Name="textBoxWindowWidth" Width="50" MaxLength="5" Text="" />
                             </StackPanel>
                             <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                                <TextBlock
-                                    x:Name="labelWindowHeight"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    Text="高さ：" />
-                                <controls:NumericTextBox
-                                    x:Name="textBoxWindowHeight"
-                                    Width="50"
-                                    Height="16"
-                                    HorizontalAlignment="Left"
-                                    HorizontalContentAlignment="Right"
-                                    MaxLength="5"
-                                    Text="" />
+                                <TextBlock Width="50" Text="高さ：" />
+                                <controls:NumericTextBox x:Name="textBoxWindowHeight" Width="50" MaxLength="5" Text="" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -234,23 +136,14 @@
 
         <!--  画像加工  -->
         <StackPanel
-            Height="90"
             Margin="0,10,0,0"
             VerticalAlignment="Top"
             Orientation="Horizontal">
-            <TextBlock
-                Width="70"
-                Height="16"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Text="画像加工"
-                TextWrapping="Wrap" />
+            <TextBlock Width="70" Text="画像加工" />
             <!--  画像加工：縁カット  -->
             <StackPanel Width="150" Orientation="Vertical">
                 <CheckBox
                     x:Name="checkBoxTrimEdge"
-                    Height="20"
-                    HorizontalAlignment="Left"
                     Click="RefreshUIControls"
                     Content="縁トリミング" />
                 <StackPanel
@@ -260,37 +153,29 @@
                     <controls:NumericTextBox
                         x:Name="textBoxTrimTop"
                         Width="50"
-                        Height="16"
                         HorizontalAlignment="Center"
-                        HorizontalContentAlignment="Right"
                         MaxLength="5"
                         Text="0" />
                     <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                         <controls:NumericTextBox
                             x:Name="textBoxTrimLeft"
                             Width="50"
-                            Height="16"
                             HorizontalAlignment="Left"
-                            HorizontalContentAlignment="Right"
                             MaxLength="5"
                             Text="0" />
                         <controls:NumericTextBox
                             x:Name="textBoxTrimRight"
                             Width="50"
-                            Height="16"
                             Margin="10,0,0,0"
                             HorizontalAlignment="Right"
-                            HorizontalContentAlignment="Right"
                             MaxLength="5"
                             Text="0" />
                     </StackPanel>
                     <controls:NumericTextBox
                         x:Name="textBoxTrimBottom"
                         Width="50"
-                        Height="16"
                         Margin="0,5,0,0"
                         HorizontalAlignment="Center"
-                        HorizontalContentAlignment="Right"
                         MaxLength="5"
                         Text="0" />
                 </StackPanel>
@@ -299,45 +184,23 @@
             <StackPanel Orientation="Vertical">
                 <CheckBox
                     x:Name="checkBoxResize"
-                    Height="20"
-                    HorizontalAlignment="Left"
                     Click="RefreshUIControls"
                     Content="リサイズ" />
-                <StackPanel
-                    x:Name="resizePanel"
-                    Margin="10,10,0,0"
-                    Orientation="Vertical">
+                <StackPanel x:Name="resizePanel" Margin="10,10,0,0" Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock
-                            x:Name="labelResizeWidth"
-                            Width="50"
-                            Height="16"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Text="幅：" />
+                        <TextBlock Width="50" Text="幅：" />
                         <controls:NumericTextBox
                             x:Name="textBoxResizeWidth"
                             Width="50"
-                            Height="16"
-                            HorizontalAlignment="Left"
-                            HorizontalContentAlignment="Right"
                             MaxLength="5"
                             Text="" />
                         <TextBlock Text="px" />
                     </StackPanel>
                     <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                        <TextBlock
-                            x:Name="labelResizeHeight"
-                            Width="50"
-                            Height="16"
-                            HorizontalAlignment="Left"
-                            Text="高さ：" />
+                        <TextBlock Width="50" Text="高さ：" />
                         <controls:NumericTextBox
                             x:Name="textBoxResizeHeight"
                             Width="50"
-                            Height="16"
-                            HorizontalAlignment="Left"
-                            HorizontalContentAlignment="Right"
                             MaxLength="5"
                             Text="" />
                         <TextBlock Text="px" />
@@ -351,33 +214,19 @@
         </StackPanel>
 
         <!--  保存方法  -->
-        <StackPanel
-            Margin="0,10,0,0"
-            Orientation="Horizontal">
-            <TextBlock
-                Width="70"
-                Height="16"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Text="保存方法" />
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Width="70" Text="保存方法" />
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
-                    <StackPanel Orientation="Vertical"
-                                Width="150">
+                    <StackPanel Orientation="Vertical" Width="150">
                         <RadioButton x:Name="radioButtonSaveClipboard"
                                      Width="150"
-                                     Height="20"
-                                     HorizontalAlignment="Left"
-                                     VerticalAlignment="Top"
                                      Content="クリップボード"
                                      GroupName="SaveTo"
                                      Checked="RefreshUIControls" />
                         <RadioButton x:Name="radioButtonSaveBMP"
                                      Width="150"
-                                     Height="20"
-                                     Margin="0,5,0,0"
-                                     HorizontalAlignment="Left"
-                                     VerticalAlignment="Top"
+                                     Margin="0,10,0,0"
                                      Content="ファイル(BMP形式)"
                                      GroupName="SaveTo"
                                      Checked="RefreshUIControls" />
@@ -385,40 +234,31 @@
                     <StackPanel Orientation="Vertical">
                         <RadioButton x:Name="radioButtonSavePNG"
                                      Width="150"
-                                     Height="20"
-                                     HorizontalAlignment="Left"
-                                     VerticalAlignment="Top"
                                      Content="ファイル(PNG形式)"
                                      GroupName="SaveTo"
                                      Checked="RefreshUIControls" />
                         <RadioButton x:Name="radioButtonSaveJPEG"
                                      Width="150"
-                                     Height="20"
-                                     Margin="0,5,0,0"
-                                     HorizontalAlignment="Left"
-                                     VerticalAlignment="Top"
+                                     Margin="0,10,0,0"
                                      Content="ファイル(JPEG形式)"
                                      GroupName="SaveTo"
                                      Checked="RefreshUIControls" />
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal"
-                            Margin="0,5,0,0">
-                    <TextBlock Height="16"
-                               HorizontalAlignment="Left"
-                               VerticalAlignment="Top"
-                               Text="ファイル名：" />
+                            Margin="0,10,0,0">
                     <StackPanel Orientation="Vertical">
+                        <TextBlock Text="ファイル名：" />
+                        <TextBlock Text="【書式】" HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"
+                                Margin="5,0,0,0">
                         <TextBox x:Name="textBoxFileNameFormat"
                              Width="300"
-                             Height="16"
-                             VerticalAlignment="Top"
                              TextWrapping="Wrap" />
-                        <TextBlock x:Name="labelFilenameFormat"
-                               Height="16"
-                               HorizontalAlignment="Left"
-                               VerticalAlignment="Top"
-                               Text="【書式】%NAME%:名称" />
+                        <TextBlock Text="%NAME%：名称 / %DATETIME%：日付_日時" />
+                        <TextBlock Text="%DATE%：日付 / %TIME%：日時" />
+                        <TextBlock Text="%NUMBER{開始}.桁数%：連番" />
                     </StackPanel>
                 </StackPanel>
                 <CheckBox x:Name="checkBoxSaveAsEnable"

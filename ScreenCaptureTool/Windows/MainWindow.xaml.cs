@@ -832,14 +832,28 @@ namespace ScreenCaptureTool.Windows
                 var bitmap = provider.Capture();
                 if (bitmap != null)
                 {
-                    if (provider.CaptureItem is ManualScreenRectCaptureItem manualScreenRectCaptureItem)
+                    // 画像を保存
+                    if (SaveCaptureImage(bitmap))
                     {
-                        // 選択された矩形を取得
-                        CurrentSetting.Location = manualScreenRectCaptureItem.TargetRect.Location;
-                        CurrentSetting.Size = manualScreenRectCaptureItem.TargetRect.Size;
+                        // 保存が成功したら撮影設定を更新して保存
+                        // 撮影位置とサイズが固定されていない場合は、撮影後の位置とサイズを保存
+                        if (provider.CaptureItem is ManualScreenRectCaptureItem manualScreenRectCaptureItem)
+                        {
+                            // 選択された矩形を取得
+                            if (CurrentSetting.LocationFixed == false)
+                            {
+                                CurrentSetting.Location = manualScreenRectCaptureItem.TargetRect.Location;
+                            }
+                            if (CurrentSetting.SizeFixed == false)
+                            {
+                                CurrentSetting.Size = manualScreenRectCaptureItem.TargetRect.Size;
+                            }
+                        }
+                        // ファイル名書式のインクリメント
+                        CurrentSetting.IncrimentFilenameFormatNumber();
+                        // 撮影設定を保存
+                        SaveProjectFile(projectSettings);
                     }
-
-                    SaveCaptureImage(bitmap);
                 }
             }
             catch (ArgumentException ex)
@@ -861,7 +875,6 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void Thumbnail_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            // ダブルクリック：画像を開く
             if (sender is System.Windows.Controls.Image image)
             {
                 if (image.DataContext is ImageFile clickedItem)
@@ -880,6 +893,25 @@ namespace ScreenCaptureTool.Windows
 
                         default:
                             break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// サムネイル画像：右クリック
+        /// </summary>
+        private void Thumbnail_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            // シングルクリック時の選択処理
+            if (e.ClickCount == 1)
+            {
+                // サムネイル画像を選択
+                if (sender is System.Windows.Controls.Image image)
+                {
+                    if (image.DataContext is ImageFile clickedItem)
+                    {
+                        SelectImageFile(clickedItem);
                     }
                 }
             }

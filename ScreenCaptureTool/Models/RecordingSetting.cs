@@ -1,9 +1,13 @@
 ﻿using ScreenCaptureTool.Models.CaptureItem;
+using ScreenCaptureTool.Utilities;
 
 using System;
 using System.Drawing;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+
+using static System.Windows.Forms.DataFormats;
 
 namespace ScreenCaptureTool.Models
 {
@@ -296,8 +300,8 @@ namespace ScreenCaptureTool.Models
         {
             get
             {
-                var format = FilenameFormat.Trim() + FileExtension;
-                return format.Replace("%NAME%", Name);
+                var formatter = new FileNameFormatter(FilenameFormat, Name, FileExtension);
+                return formatter.FormattedName;
             }
         }
 
@@ -351,6 +355,15 @@ namespace ScreenCaptureTool.Models
         #endregion Constructor
 
         #region Methods(Public)
+
+        /// <summary>
+        /// ファイル名の連番をインクリメントして書式文字列を更新
+        /// </summary>
+        public void IncrimentFilenameFormatNumber()
+        {
+            var formatter = new FileNameFormatter(FilenameFormat, Name, FileExtension);
+            FilenameFormat = formatter.IncriementNumber();
+        }
 
         /// <summary>
         /// 画像保存形式を取得

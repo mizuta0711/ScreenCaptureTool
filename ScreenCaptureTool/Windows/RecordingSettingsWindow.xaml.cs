@@ -164,7 +164,7 @@ namespace ScreenCaptureTool.Windows
             if (radioButtonSaveJPEG.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.FileJPEG;
 
             // ファイル名書式
-            Setting.FilenameFormat = textBoxFileNameFormat.Text;
+            Setting.FilenameFormat = textBoxFileNameFormat.Text.Trim();
 
             // 保存形式：名前を付けて保存
             Setting.SaveAsEnable = checkBoxSaveAsEnable.IsChecked ?? false;
