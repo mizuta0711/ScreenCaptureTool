@@ -520,15 +520,14 @@ namespace ScreenCaptureTool.Windows
             try
             {
                 // サムネル画像を読み込む
-                BitmapImage thumbnail = BitmapHelper.LoadBitmapImage(filePath);
-
                 // 一覧に同じファイル名があれば更新、なければ追加
                 foreach (var imageFile in ImageFiles)
                 {
                     if (imageFile.FileName == Path.GetFileName(filePath))
                     {
                         // 画像ファイル情報を更新
-                        imageFile.Thumbnail = thumbnail;
+                        imageFile.ImageUrl = filePath;
+                        //imageFile.Thumbnail = thumbnail;
                         imageFile.ThumbnailWidth = thumbnailSize;
                         imageFile.ThumbnailHeight = thumbnailSize;
                         return;
@@ -539,7 +538,7 @@ namespace ScreenCaptureTool.Windows
                 ImageFiles.Add(new ImageFile
                 {
                     FileName = Path.GetFileName(filePath),
-                    Thumbnail = thumbnail,
+                    ImageUrl = filePath,
                     ThumbnailWidth = thumbnailSize,
                     ThumbnailHeight = thumbnailSize
                 });

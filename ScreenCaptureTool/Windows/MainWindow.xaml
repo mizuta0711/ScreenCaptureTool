@@ -160,7 +160,7 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <Image Source="{Binding Thumbnail}"
+                                        <controls:AsyncImage ImageUrl="{Binding ImageUrl}"
                                                Width="{Binding ThumbnailWidth}"
                                                Height="{Binding ThumbnailHeight}"
                                                Stretch="Uniform"
@@ -172,7 +172,7 @@
                                                         Click="DeleteMenuItem_Click" />
                                                 </ContextMenu>
                                             </Image.ContextMenu>
-                                        </Image>
+                                        </controls:AsyncImage>
                                     </Border>
                                     <TextBlock Text="{Binding FileName}"
                                                HorizontalAlignment="Center" />

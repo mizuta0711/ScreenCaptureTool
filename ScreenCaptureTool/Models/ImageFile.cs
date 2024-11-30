@@ -21,6 +21,11 @@ namespace ScreenCaptureTool.Models
         private string? fileName;
 
         /// <summary>
+        /// ファイルパス
+        /// </summary>
+        private string? imageUrl;
+
+        /// <summary>
         /// 画像イメージ
         /// </summary>
         private BitmapImage? thumbnail;
@@ -69,6 +74,22 @@ namespace ScreenCaptureTool.Models
                 {
                     fileName = value;
                     OnPropertyChanged(nameof(FileName));
+                }
+            }
+        }
+
+        /// <summary>
+        /// ファイルパス
+        /// </summary>
+        public string? ImageUrl
+        {
+            get => imageUrl;
+            set
+            {
+                if (imageUrl != value)
+                {
+                    imageUrl = value;
+                    OnPropertyChanged(nameof(imageUrl));
                 }
             }
         }
