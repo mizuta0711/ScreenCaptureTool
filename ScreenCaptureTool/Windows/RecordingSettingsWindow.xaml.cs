@@ -1,5 +1,7 @@
 ﻿using ScreenCaptureTool.Models;
+using ScreenCaptureTool.Models.CaptureItem;
 
+using System;
 using System.Windows;
 
 using static ScreenCaptureTool.Models.RecordingSetting;
@@ -193,8 +195,14 @@ namespace ScreenCaptureTool.Windows
                 RecordingTypeWindowPanel.IsEnabled = false;
                 RecordingTypeRectanglePanel.IsEnabled = true;
 
-                recordingPositionPanel.IsEnabled = checkBoxFixedPos.IsChecked ?? false;
-                recordingSizePanel.IsEnabled = checkBoxFixedSize.IsChecked ?? false;
+                // 撮影位置固定、撮影サイズ固定のチェックボックスの有効化
+                var fixedPos = checkBoxFixedPos.IsChecked ?? false;
+                var fixedSize = checkBoxFixedSize.IsChecked ?? false;
+                recordingPositionPanel.IsEnabled = fixedPos;
+                recordingSizePanel.IsEnabled = fixedSize;
+
+                // 矩形選択ボタンの有効化
+                buttonSelectRecordingRange.IsEnabled = (fixedPos && fixedSize) ? false : true;
             }
 
             // 加工
@@ -219,6 +227,58 @@ namespace ScreenCaptureTool.Windows
         private void RefreshUIControls(object sender, RoutedEventArgs e)
         {
             RefreshUIControls();
+        }
+
+        /// <summary>
+        /// 画面を選択して設定するボタン：押下イベント
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SelectRecordingRangeButton_Click(object sender, RoutedEventArgs e)
+        {
+            var overlayWindow = new CaptureRectOverlayWindow();
+
+            // 現在の設定をオーバーレイウィンドウに反映
+            var locationFixed = checkBoxFixedPos.IsChecked ?? false;
+            var sizeFixed = checkBoxFixedSize.IsChecked ?? false;
+            var location = new System.Drawing.Point(ParseInt(textBoxWindowPosX.Text),
+                                                    ParseInt(textBoxWindowPosY.Text));
+            var size = new System.Drawing.Size(ParseInt(textBoxWindowWidth.Text),
+                                               ParseInt(textBoxWindowHeight.Text));
+            if (locationFixed && sizeFixed)
+            {
+                overlayWindow.SetCaptureItem(new ManualScreenRectCaptureItem(location, size));
+            }
+            else if (locationFixed)
+            {
+                overlayWindow.SetCaptureItem(new ManualScreenRectCaptureItem(location));
+            }
+            else if (sizeFixed)
+            {
+                overlayWindow.SetCaptureItem(new ManualScreenRectCaptureItem(size));
+            }
+
+            // オーバーレイウィンドウを表示
+            if (overlayWindow.ShowDialog() == true)
+            {
+                // 選択された矩形が空の場合はキャンセル
+                if (overlayWindow.SelectedRect.IsEmpty)
+                {
+                    return;
+                }
+
+                // 選択された矩形を取得してUIに反映
+                if (locationFixed == false)
+                {
+                    textBoxWindowPosX.Text = Math.Floor(overlayWindow.SelectedRect.X).ToString();
+                    textBoxWindowPosY.Text = Math.Floor(overlayWindow.SelectedRect.Y).ToString();
+                }
+                if (sizeFixed == false)
+                {
+                    textBoxWindowWidth.Text = Math.Floor(overlayWindow.SelectedRect.Width).ToString();
+                    textBoxWindowHeight.Text = Math.Floor(overlayWindow.SelectedRect.Height).ToString();
+                }
+            }
         }
 
         /// <summary>
