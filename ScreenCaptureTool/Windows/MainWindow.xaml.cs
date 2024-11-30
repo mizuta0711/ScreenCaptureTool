@@ -358,20 +358,6 @@ namespace ScreenCaptureTool.Windows
         #region Methods(CaptureTools)
 
         /// <summary>
-        /// ファイルのフルパスを作成
-        /// </summary>
-        /// <param name="folderPath">フォルダ名</param>
-        /// <param name="fileName">ファイル名(拡張子を除く)</param>
-        /// <param name="extension">拡張子(デフォルト："png")</param>
-        /// <returns>フルパス</returns>
-        private string CreateFilePath(string folderPath, string fileName, string extension = "png")
-        {
-            // パスを作成
-            string fullFileName = $"{fileName}.{extension}";
-            return Path.Combine(folderPath, fullFileName);
-        }
-
-        /// <summary>
         /// 画像ファイルを削除(ゴミ箱に移動)
         /// ※サムネイル一覧も更新する
         /// </summary>
@@ -448,25 +434,39 @@ namespace ScreenCaptureTool.Windows
                 return true;
             }
 
-            // ComboBoxから選択または入力されたファイル名を取得
-            string selectedFileName = CurrentSetting.Name.Trim();
-            if (string.IsNullOrEmpty(selectedFileName))
+            // ファイル名を取得
+            var saveFileFullPath = Path.Combine(saveFolderPath, CurrentSetting.SaveFileName);
+            var saveType = CurrentSetting.SaveType;
+            if (CurrentSetting.SaveAsEnable)
             {
-                ShowErrorDialog("ファイル名を入力してください。");
-                return false;
+                // 名前を付けて保存ダイアログを表示
+                Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+                saveFileDialog.Filter = "PNGファイル (*.png)|*.png|BMPファイル (*.bmp)|*.bmp|JPEGファイル (*.jpg)|*.jpg|全てのファイル (*.*)|*.*";
+                saveFileDialog.InitialDirectory = Path.GetDirectoryName(saveFileFullPath);
+                saveFileDialog.FileName = Path.GetFileName(saveFileFullPath);
+                saveFileDialog.OverwritePrompt = false;
+                if (saveFileDialog.ShowDialog() == false)
+                {
+                    ShowErrorDialog("キャンセルしました");
+                    return false;
+                }
+
+                // ファイル名を取得
+                saveFileFullPath = saveFileDialog.FileName;
+                // 拡張子に応じた画像形式に変更
+                saveType = RecordingSetting.GetImageSaveType(saveFileFullPath);
             }
 
             try
             {
                 // 画像ファイルに保存
-                string filePath = CreateFilePath(saveFolderPath, selectedFileName, CurrentSetting.FileExtension);
-                if (BitmapHelper.SaveToFile(bitmap, filePath, CurrentSetting.SaveType, CurrentSetting.ConfirmOverrideFile) == false)
+                if (BitmapHelper.SaveToFile(bitmap, saveFileFullPath, saveType, CurrentSetting.ConfirmOverrideFile) == false)
                 {
                     return false;
                 }
 
                 // サムネイルリストを更新
-                AddImageToList(filePath);
+                AddImageToList(saveFileFullPath);
 
                 return true;
             }

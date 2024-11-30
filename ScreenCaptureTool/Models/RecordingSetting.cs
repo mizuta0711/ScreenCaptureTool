@@ -2,6 +2,7 @@
 
 using System;
 using System.Drawing;
+using System.IO;
 using System.Xml.Serialization;
 
 namespace ScreenCaptureTool.Models
@@ -130,42 +131,21 @@ namespace ScreenCaptureTool.Models
         public ImageSaveType SaveType { get; set; } = ImageSaveType.FilePNG;
 
         /// <summary>
+        /// ファイル名フォーマット
+        /// </summary>
+        public string FilenameFormat { get; set; } = "%NAME%";
+
+        /// <summary>
+        /// 名前を付けて保存を有効にする
+        /// </summary>
+        public bool SaveAsEnable { get; set; } = false;
+
+        /// <summary>
         /// ファイルの上書き確認
         /// </summary>
         public bool ConfirmOverrideFile { get; set; } = true;
 
         #region Properties(Serialize)
-
-        #region Properties
-
-        /// <summary>
-        /// 撮影情報を取得
-        /// </summary>
-        public string Information
-        {
-            get
-            {
-                if (Type == RecordingType.Window)
-                {
-                    return $"ウィンドウ:{WindowTitle}";
-                }
-                if (LocationFixed && SizeFixed)
-                {
-                    return $"位置:({Location.X},{Location.Y}) / サイズ:({Size.Width},{Size.Height})";
-                }
-                if (LocationFixed)
-                {
-                    return $"位置:({Location.X},{Location.Y}) / サイズ:撮影時に選択";
-                }
-                if (SizeFixed)
-                {
-                    return $"位置:撮影時に選択 / サイズ:({Size.Width},{Size.Height})";
-                }
-                return "撮影時に範囲を選択";
-            }
-        }
-
-        #endregion Properties
 
         /// <summary>
         /// シリアライズ用：ウィンドウ位置
@@ -253,6 +233,76 @@ namespace ScreenCaptureTool.Models
 
         #endregion Properties(Serialize)
 
+        #region Properties(Other)
+
+        /// <summary>
+        /// 撮影情報を取得
+        /// </summary>
+        [XmlIgnore]
+        public string Information
+        {
+            get
+            {
+                if (Type == RecordingType.Window)
+                {
+                    return $"ウィンドウ:{WindowTitle}";
+                }
+                if (LocationFixed && SizeFixed)
+                {
+                    return $"位置:({Location.X},{Location.Y}) / サイズ:({Size.Width},{Size.Height})";
+                }
+                if (LocationFixed)
+                {
+                    return $"位置:({Location.X},{Location.Y}) / サイズ:撮影時に選択";
+                }
+                if (SizeFixed)
+                {
+                    return $"位置:撮影時に選択 / サイズ:({Size.Width},{Size.Height})";
+                }
+                return "撮影時に範囲を選択";
+            }
+        }
+
+        /// <summary>
+        /// 画像保存形式に対応するファイル拡張子を取得
+        /// </summary>
+        [XmlIgnore]
+        private string FileExtension
+        {
+            get
+            {
+                switch (SaveType)
+                {
+                    case ImageSaveType.FilePNG:
+                        return ".png";
+
+                    case ImageSaveType.FileBMP:
+                        return ".bmp";
+
+                    case ImageSaveType.FileJPEG:
+                        return ".jpg";
+
+                    default:
+                        return "";
+                }
+            }
+        }
+
+        /// <summary>
+        /// 保存ファイル名(ファイル拡張子も含む)
+        /// </summary>
+        [XmlIgnore]
+        public string SaveFileName
+        {
+            get
+            {
+                var format = FilenameFormat.Trim() + FileExtension;
+                return format.Replace("%NAME%", Name);
+            }
+        }
+
+        #endregion Properties(Other)
+
         #endregion Properties
 
         #region Constructor
@@ -298,33 +348,35 @@ namespace ScreenCaptureTool.Models
             }
         }
 
-        /// <summary>
-        /// 画像保存形式に対応するファイル拡張子を取得
-        /// </summary>
-        public string FileExtension
-        {
-            get
-            {
-                switch (SaveType)
-                {
-                    case ImageSaveType.FilePNG:
-                        return "png";
-
-                    case ImageSaveType.FileBMP:
-                        return "bmp";
-
-                    case ImageSaveType.FileJPEG:
-                        return "jpg";
-
-                    default:
-                        return "";
-                }
-            }
-        }
-
         #endregion Constructor
 
         #region Methods(Public)
+
+        /// <summary>
+        /// 画像保存形式を取得
+        /// </summary>
+        /// <param name="path">ファイルパス</param>
+        /// <returns>画像保存形式(PNG/BMP/JPEG)</returns>
+        /// <remarks>不明な拡張子の場合はPNGと判定</remarks>
+        public static ImageSaveType GetImageSaveType(string path)
+        {
+            var ext = Path.GetExtension(path).ToLower();
+            switch (ext)
+            {
+                case ".png":
+                    return ImageSaveType.FilePNG;
+
+                case ".bmp":
+                    return ImageSaveType.FileBMP;
+
+                case ".jpg":
+                case ".jpeg":
+                    return ImageSaveType.FileJPEG;
+
+                default:
+                    return ImageSaveType.FilePNG;
+            }
+        }
 
         /// <summary>
         /// 設定に基づいてキャプチャーアイテムを取得する

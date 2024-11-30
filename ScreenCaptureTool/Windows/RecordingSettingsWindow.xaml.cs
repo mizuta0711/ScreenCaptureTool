@@ -86,6 +86,12 @@ namespace ScreenCaptureTool.Windows
             radioButtonSaveBMP.IsChecked = setting.SaveType == RecordingSetting.ImageSaveType.FileBMP;
             radioButtonSaveJPEG.IsChecked = setting.SaveType == RecordingSetting.ImageSaveType.FileJPEG;
 
+            // ファイル名書式
+            textBoxFileNameFormat.Text = setting.FilenameFormat;
+
+            // 保存形式：名前を付けて保存
+            checkBoxSaveAsEnable.IsChecked = setting.SaveAsEnable;
+
             // 保存形式：ファイルの上書き確認
             checkBoxConfirmOverrideFile.IsChecked = setting.ConfirmOverrideFile;
 
@@ -157,6 +163,12 @@ namespace ScreenCaptureTool.Windows
             if (radioButtonSaveBMP.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.FileBMP;
             if (radioButtonSaveJPEG.IsChecked == true) Setting.SaveType = RecordingSetting.ImageSaveType.FileJPEG;
 
+            // ファイル名書式
+            Setting.FilenameFormat = textBoxFileNameFormat.Text;
+
+            // 保存形式：名前を付けて保存
+            Setting.SaveAsEnable = checkBoxSaveAsEnable.IsChecked ?? false;
+
             // 保存形式：ファイルの上書き確認
             Setting.ConfirmOverrideFile = checkBoxConfirmOverrideFile.IsChecked ?? false;
 
@@ -189,8 +201,14 @@ namespace ScreenCaptureTool.Windows
             trimEdgePanel.IsEnabled = checkBoxTrimEdge.IsChecked ?? false;
             resizePanel.IsEnabled = checkBoxResize.IsChecked ?? false;
 
+            // ファイル保存オプション
+            var fileSaveOptionEnabled = (radioButtonSaveClipboard.IsChecked ?? true) ? false : true;
+            // ファイル名書式
+            textBoxFileNameFormat.IsEnabled = fileSaveOptionEnabled;
+            // 名前を付けて保存
+            checkBoxSaveAsEnable.IsEnabled = fileSaveOptionEnabled;
             // 上書き確認
-            checkBoxConfirmOverrideFile.IsEnabled = (radioButtonSaveClipboard.IsChecked ?? true) ? false : true;
+            checkBoxConfirmOverrideFile.IsEnabled = fileSaveOptionEnabled;
         }
 
         #region Methods(Event)
