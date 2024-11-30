@@ -526,8 +526,8 @@ namespace ScreenCaptureTool.Windows
                     if (imageFile.FileName == Path.GetFileName(filePath))
                     {
                         // 画像ファイル情報を更新
+                        imageFile.ImageUrl = null;  // 画像を再読み込みさせるために一度nullを設定
                         imageFile.ImageUrl = filePath;
-                        //imageFile.Thumbnail = thumbnail;
                         imageFile.ThumbnailWidth = thumbnailSize;
                         imageFile.ThumbnailHeight = thumbnailSize;
                         return;
@@ -831,6 +831,18 @@ namespace ScreenCaptureTool.Windows
                 var bitmap = provider.Capture();
                 if (bitmap != null)
                 {
+                    // 縁のトリミング
+                    if (CurrentSetting.TrimEdgeEnabled && CurrentSetting.TrimEdgeInset.IsEmpty == false)
+                    {
+                        bitmap = BitmapHelper.TrimEdge(bitmap, CurrentSetting.TrimEdgeInset);
+                    }
+
+                    // 画像のリサイズ
+                    if (CurrentSetting.ResizeEnabled && CurrentSetting.ResizeSize.IsEmpty == false)
+                    {
+                        bitmap = BitmapHelper.Resize(bitmap, CurrentSetting.ResizeSize.Width, CurrentSetting.ResizeSize.Height);
+                    }
+
                     // 画像を保存
                     if (SaveCaptureImage(bitmap))
                     {

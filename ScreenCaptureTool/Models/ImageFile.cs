@@ -26,11 +26,6 @@ namespace ScreenCaptureTool.Models
         private string? imageUrl;
 
         /// <summary>
-        /// 画像イメージ
-        /// </summary>
-        private BitmapImage? thumbnail;
-
-        /// <summary>
         /// サムネイル画像：幅
         /// </summary>
         private int thumbnailWidth;
@@ -90,22 +85,6 @@ namespace ScreenCaptureTool.Models
                 {
                     imageUrl = value;
                     OnPropertyChanged(nameof(imageUrl));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 画像イメージ
-        /// </summary>
-        public BitmapImage? Thumbnail
-        {
-            get => thumbnail;
-            set
-            {
-                if (thumbnail != value)
-                {
-                    thumbnail = value;
-                    OnPropertyChanged(nameof(Thumbnail));
                 }
             }
         }

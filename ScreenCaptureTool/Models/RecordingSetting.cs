@@ -4,10 +4,7 @@ using ScreenCaptureTool.Utilities;
 using System;
 using System.Drawing;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Xml.Serialization;
-
-using static System.Windows.Forms.DataFormats;
 
 namespace ScreenCaptureTool.Models
 {
@@ -27,6 +24,11 @@ namespace ScreenCaptureTool.Models
             public int Left;
             public int Bottom;
             public int Right;
+
+            /// <summary>
+            /// 空かどうか
+            /// </summary>
+            public bool IsEmpty => Top == 0 && Left == 0 && Bottom == 0 && Right == 0;
 
             public EdgeInsets(int top, int left, int bottom, int right)
             {

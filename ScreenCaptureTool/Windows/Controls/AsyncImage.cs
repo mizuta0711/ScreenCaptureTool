@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -58,19 +59,28 @@ namespace ScreenCaptureTool.Windows.Controls
             // プレースホルダー画像を一時的に表示
             this.Source = GetPlaceholderImage();
 
+            if (string.IsNullOrEmpty(url))
+            {
+                // URLが空の場合は何もしない
+                return;
+            }
+
             try
             {
                 // 画像を非同期で読み込む
                 var bitmap = await Task.Run(() =>
                 {
-                    var bi = new BitmapImage();
-                    bi.BeginInit();
-                    bi.CacheOption = BitmapCacheOption.OnLoad;
-                    bi.UriSource = new Uri(url, UriKind.Absolute);
-                    bi.DecodePixelWidth = 200; // TODO: とりあえず固定値…後で設定可能にする
-                    bi.EndInit();
-                    bi.Freeze(); // 他のスレッドからも安全にアクセス可能にする
-                    return bi;
+                    using (FileStream fs = new FileStream(url, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        BitmapImage bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad; // ストリームを読み込み
+                        bitmap.StreamSource = fs;
+                        bitmap.DecodePixelWidth = 200; // TODO: とりあえず固定値…後で設定可能にする
+                        bitmap.EndInit();
+                        bitmap.Freeze();            // 他のスレッドからも安全にアクセス可能にする
+                        return bitmap;
+                    }
                 });
 
                 // 読み込んだ画像をImageコントロールのSourceに設定
