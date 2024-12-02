@@ -16,6 +16,8 @@ using ScreenCaptureTool.Utilities;
 using System.Windows.Input;
 using ScreenCaptureTool.Controllers.CaptureProvider;
 using ScreenCaptureTool.Windows.Controls;
+using System.Threading.Tasks;
+using Microsoft.Win32;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -170,6 +172,30 @@ namespace ScreenCaptureTool.Windows
         private static void ShowInformationDialog(string message)
         {
             MessageBox.Show(message, "情報", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        /// <summary>
+        /// ステータスメッセージを更新し、必要に応じて一定時間後に消去します。
+        /// </summary>
+        /// <param name="message">表示するメッセージ</param>
+        /// <param name="autoClear">trueの場合、一定時間後にメッセージをクリア</param>
+        private async void UpdateStatusBarMessage(string message, bool autoClear = true)
+        {
+            // メッセージの頭に時刻を付加
+            message = $"({DateTime.Now:HH:mm:ss}) {message}";
+            StatusBarMessage.Text = message;
+
+            if (autoClear)
+            {
+                // 10秒後にメッセージをクリア
+                await Task.Delay(TimeSpan.FromSeconds(10));
+
+                // メッセージが変更されていない場合のみクリア
+                if (StatusBarMessage.Text == message)
+                {
+                    StatusBarMessage.Text = string.Empty;
+                }
+            }
         }
 
         #endregion Methods(Utility)
@@ -474,6 +500,8 @@ namespace ScreenCaptureTool.Windows
             {
                 // クリップボードにコピー
                 BitmapHelper.CopyToClipboard(bitmap);
+
+                UpdateStatusBarMessage($"[{CurrentSetting.Name}] クリップボードに保存しました");
                 return true;
             }
 
@@ -510,6 +538,8 @@ namespace ScreenCaptureTool.Windows
 
                 // サムネイルリストを更新
                 AddImageToList(saveFileFullPath);
+
+                UpdateStatusBarMessage($"[{CurrentSetting.Name}] {Path.GetFileName(saveFileFullPath)} を保存しました");
 
                 return true;
             }
@@ -922,6 +952,10 @@ namespace ScreenCaptureTool.Windows
                         // 撮影設定一覧を更新
                         System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings).Refresh();
                     }
+                } else
+                {
+                    // キャプチャ画像が取得できなかった場合
+                    ShowErrorDialog("画像の取得に失敗しました");
                 }
             }
             catch (ArgumentException ex)

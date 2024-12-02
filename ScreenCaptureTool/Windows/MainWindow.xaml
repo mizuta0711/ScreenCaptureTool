@@ -8,183 +8,189 @@
         Title="画面キャプチャーツール"
         Height="450"
         Width="800">
-    <Grid>
-        <!-- メニューバーの追加 -->
-        <Menu VerticalAlignment="Top">
-            <MenuItem Header="ファイル (_F)">
-                <MenuItem Header="開く (_O)"
+    <DockPanel>
+        <!-- ステータスバー -->
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock x:Name="StatusBarMessage" />
+        </StatusBar>
+        <Grid DockPanel.Dock="Top">
+            <!-- メニューバーの追加 -->
+            <Menu VerticalAlignment="Top">
+                <MenuItem Header="ファイル (_F)">
+                    <MenuItem Header="開く (_O)"
                         Click="OnOpenProjectMenu_Clicked" />
-                <MenuItem Header="上書き保存 (_S)"
+                    <MenuItem Header="上書き保存 (_S)"
                         Click="OnSaveProjectMenu_Clicked" />
-                <MenuItem Header="名前を付けて保存 (_A)"
+                    <MenuItem Header="名前を付けて保存 (_A)"
                         Click="OnSaveAsProjectMenu_Clicked" />
-                <Separator />
-                <MenuItem Header="終了 (_X)"
+                    <Separator />
+                    <MenuItem Header="終了 (_X)"
                         Click="OnExitMenu_Clicked" />
-            </MenuItem>
-            <MenuItem Header="表示 (_D)">
-                <MenuItem x:Name="ThumbnailSizeMenu" Header="サムネイルサイズ">
-                    <MenuItem Header="特大" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="200" />
-                    <MenuItem Header="大" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="150" />
-                    <MenuItem Header="中" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="100" />
-                    <MenuItem Header="小" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="50" />
                 </MenuItem>
-            </MenuItem>
-        </Menu>
+                <MenuItem Header="表示 (_D)">
+                    <MenuItem x:Name="ThumbnailSizeMenu" Header="サムネイルサイズ">
+                        <MenuItem Header="特大" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="200" />
+                        <MenuItem Header="大" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="150" />
+                        <MenuItem Header="中" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="100" />
+                        <MenuItem Header="小" IsCheckable="True" Click="ThumbnailSizeMenuItem_Click" Tag="50" />
+                    </MenuItem>
+                </MenuItem>
+            </Menu>
 
-        <Grid Margin="0,20,0,0">
-            <Grid.RowDefinitions>
-                <!-- 上部の設定エリア -->
-                <RowDefinition Height="185" />
-                <!-- 下部のサムネイル表示エリア -->
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!-- 上部の設定UI -->
-            <Grid>
-                <!-- 行と列を定義 -->
+            <Grid Margin="0,20,0,0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <!-- 必要に応じて変更 -->
+                    <!-- 上部の設定エリア -->
+                    <RowDefinition Height="185" />
+                    <!-- 下部のサムネイル表示エリア -->
                     <RowDefinition Height="*" />
-                    <!-- 可変 -->
                 </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <!-- リストビューが可変 -->
-                    <ColumnDefinition Width="155" />
-                    <!-- ボタンの固定幅 -->
-                </Grid.ColumnDefinitions>
 
-                <!-- 撮影設定一覧 -->
-                <controls:RecordingSettingListView x:Name="listViewRecoringSetting"
+                <!-- 上部の設定UI -->
+                <Grid>
+                    <!-- 行と列を定義 -->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <!-- 必要に応じて変更 -->
+                        <RowDefinition Height="*" />
+                        <!-- 可変 -->
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <!-- リストビューが可変 -->
+                        <ColumnDefinition Width="155" />
+                        <!-- ボタンの固定幅 -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 撮影設定一覧 -->
+                    <controls:RecordingSettingListView x:Name="listViewRecoringSetting"
                                                    Grid.Row="1"
                                                    Grid.Column="0"
                                                    SelectionMode="Single"
                                                    ItemsSource="{Binding RecordingSettings}"
                                                    MouseDoubleClick="RecordingSettingList_MouseDoubleClick">
-                    <ListView.ContextMenu>
-                        <ContextMenu Opened="RecordingSettingListViewMenu_Opened">
-                            <MenuItem Header="追加" Click="AddSettingMenuItem_Click" />
-                            <MenuItem Header="編集" x:Name="MenuItemEdit" Click="EditSettingMenuItem_Click" />
-                            <MenuItem Header="削除" x:Name="MenuItemDelete" Click="DeleteSettingMenuItem_Click" />
-                            <Separator />
-                            <MenuItem Header="複製" x:Name="MenuItemCopy" Click="DuplicateSettingMenuItem_Click" />
-                        </ContextMenu>
-                    </ListView.ContextMenu>
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn x:Name="recordingListColumnName" Header="名前" DisplayMemberBinding="{Binding Name}" Width="150" />
-                            <GridViewColumn x:Name="recordingListColumnInformation" Header="撮影情報" DisplayMemberBinding="{Binding Information}" Width="200" />
-                            <GridViewColumn x:Name="recordingListColumnSaveInformation" Header="保存先" DisplayMemberBinding="{Binding SaveInformation}" Width="200" />
-                            <GridViewColumn x:Name="recordingListColumnDescription" Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
-                        </GridView>
-                    </ListView.View>
-                </controls:RecordingSettingListView>
+                        <ListView.ContextMenu>
+                            <ContextMenu Opened="RecordingSettingListViewMenu_Opened">
+                                <MenuItem Header="追加" Click="AddSettingMenuItem_Click" />
+                                <MenuItem Header="編集" x:Name="MenuItemEdit" Click="EditSettingMenuItem_Click" />
+                                <MenuItem Header="削除" x:Name="MenuItemDelete" Click="DeleteSettingMenuItem_Click" />
+                                <Separator />
+                                <MenuItem Header="複製" x:Name="MenuItemCopy" Click="DuplicateSettingMenuItem_Click" />
+                            </ContextMenu>
+                        </ListView.ContextMenu>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn x:Name="recordingListColumnName" Header="名前" DisplayMemberBinding="{Binding Name}" Width="150" />
+                                <GridViewColumn x:Name="recordingListColumnInformation" Header="撮影情報" DisplayMemberBinding="{Binding Information}" Width="200" />
+                                <GridViewColumn x:Name="recordingListColumnSaveInformation" Header="保存先" DisplayMemberBinding="{Binding SaveInformation}" Width="200" />
+                                <GridViewColumn x:Name="recordingListColumnDescription" Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
+                            </GridView>
+                        </ListView.View>
+                    </controls:RecordingSettingListView>
 
-                <!-- ボタン群 -->
-                <StackPanel Grid.Row="1"
+                    <!-- ボタン群 -->
+                    <StackPanel Grid.Row="1"
                             Grid.Column="1"
                             Orientation="Vertical">
-                    <!-- 上部の編集・追加ボタン -->
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <Button x:Name="buttonEditSetting"
+                        <!-- 上部の編集・追加ボタン -->
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Button x:Name="buttonEditSetting"
                                 Content="編集"
                                 Width="70"
                                 Height="25"
                                 Click="EditSettingButton_Click"
                                 Margin="0,0,0,0" />
-                        <Button x:Name="buttonAddSetting"
+                            <Button x:Name="buttonAddSetting"
                                 Content="追加"
                                 Width="70"
                                 Height="25"
                                 Click="AddSettingButton_Click"
                                 Margin="5,0,0,0" />
-                    </StackPanel>
+                        </StackPanel>
 
-                    <!-- 撮影ボタン -->
-                    <Button x:Name="buttonCapture"
+                        <!-- 撮影ボタン -->
+                        <Button x:Name="buttonCapture"
                             Content="撮影"
                             Width="145"
                             Height="145"
                             Click="CaptureButton_Click"
                             Margin="0,0,0,5" />
-                </StackPanel>
-            </Grid>
+                    </StackPanel>
+                </Grid>
 
-            <!-- 下部のサムネイル表示エリア -->
-            <Grid Grid.Row="1">
-                <!-- 左右のペインを分割 -->
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="columnDefinitionTreeViewPane" Width="300" />
-                    <ColumnDefinition Width="5" />
-                    <!-- GridSplitter のスペース -->
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+                <!-- 下部のサムネイル表示エリア -->
+                <Grid Grid.Row="1">
+                    <!-- 左右のペインを分割 -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="columnDefinitionTreeViewPane" Width="300" />
+                        <ColumnDefinition Width="5" />
+                        <!-- GridSplitter のスペース -->
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- 左側のフォルダツリー表示 -->
-                <controls:FolderTreeView x:Name="FolderTreeView"
+                    <!-- 左側のフォルダツリー表示 -->
+                    <controls:FolderTreeView x:Name="FolderTreeView"
                                         Grid.Column="0"
                                         SelectedItemChanged="FolderTreeView_SelectedItemChanged" />
 
-                <!-- GridSplitter：左右のペインの幅をドラッグで変更可能にする -->
-                <GridSplitter Grid.Column="1"
+                    <!-- GridSplitter：左右のペインの幅をドラッグで変更可能にする -->
+                    <GridSplitter Grid.Column="1"
                                 Width="5"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Background="Gray"
                                 ShowsPreview="True" />
 
-                <!-- 右側のサムネイル表示エリア -->
-                <ScrollViewer Grid.Column="2"
+                    <!-- 右側のサムネイル表示エリア -->
+                    <ScrollViewer Grid.Column="2"
                         VerticalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="ThumbnailItemsControl"
+                        <ItemsControl x:Name="ThumbnailItemsControl"
                             ItemsSource="{Binding ImageFiles}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <!-- WrapPanelを使用して上寄せで表示 -->
-                                <WrapPanel VerticalAlignment="Top" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical" Margin="10">
-                                    <Border BorderThickness="2"
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <!-- WrapPanelを使用して上寄せで表示 -->
+                                    <WrapPanel VerticalAlignment="Top" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical" Margin="10">
+                                        <Border BorderThickness="2"
                                             CornerRadius="5">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="BorderBrush" Value="Transparent" />
-                                                <Setter Property="Background" Value="White" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter Property="BorderBrush" Value="Blue" />
-                                                        <Setter Property="Background" Value="#DCE6F1" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <controls:AsyncImage ImageUrl="{Binding ImageUrl}"
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                                    <Setter Property="Background" Value="White" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="Blue" />
+                                                            <Setter Property="Background" Value="#DCE6F1" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <controls:AsyncImage ImageUrl="{Binding ImageUrl}"
                                                Width="{Binding ThumbnailWidth}"
                                                Height="{Binding ThumbnailHeight}"
                                                Stretch="Uniform"
                                                MouseLeftButtonDown="Thumbnail_MouseLeftButtonDown"
                                                MouseRightButtonDown="Thumbnail_MouseRightButtonDown">
-                                            <Image.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="削除"
+                                                <Image.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="削除"
                                                         Click="DeleteMenuItem_Click" />
-                                                </ContextMenu>
-                                            </Image.ContextMenu>
-                                        </controls:AsyncImage>
-                                    </Border>
-                                    <TextBlock Text="{Binding FileName}"
+                                                    </ContextMenu>
+                                                </Image.ContextMenu>
+                                            </controls:AsyncImage>
+                                        </Border>
+                                        <TextBlock Text="{Binding FileName}"
                                                HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
         </Grid>
-    </Grid>
+    </DockPanel>
 </Window>
