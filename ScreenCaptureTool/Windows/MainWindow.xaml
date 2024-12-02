@@ -67,6 +67,8 @@
                             <MenuItem Header="追加" Click="AddSettingMenuItem_Click" />
                             <MenuItem Header="編集" x:Name="MenuItemEdit" Click="EditSettingMenuItem_Click" />
                             <MenuItem Header="削除" x:Name="MenuItemDelete" Click="DeleteSettingMenuItem_Click" />
+                            <Separator />
+                            <MenuItem Header="複製" x:Name="MenuItemCopy" Click="DuplicateSettingMenuItem_Click" />
                         </ContextMenu>
                     </ListView.ContextMenu>
                     <ListView.View>

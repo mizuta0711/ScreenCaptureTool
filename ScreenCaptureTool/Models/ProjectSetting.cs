@@ -66,7 +66,7 @@ namespace ScreenCaptureTool.Models
             WindowWidth = 0;
             WindowHeight = 0;
 
-            ThumbnailSize = 200;
+            ThumbnailSize = 100;
             SaveFolderPath = Environment.CurrentDirectory;
             RecordingSettings = new ObservableCollection<RecordingSetting>();
 

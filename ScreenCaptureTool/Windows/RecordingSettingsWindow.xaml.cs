@@ -40,13 +40,17 @@ namespace ScreenCaptureTool.Windows
         /// 設定の読み込み（画面UIへの反映）
         /// </summary>
         /// <param name="setting">撮影設定</param>
-        public void LoadSettings(RecordingSetting setting)
+        /// <param name="isDuplicate">複製するか</param>
+        public void LoadSettings(RecordingSetting setting, bool isDuplicate = false)
         {
-            // 保持
-            Setting = setting;
+            // 編集の場合はインスタンスを保持
+            if (isDuplicate == false)
+            {
+                Setting = setting;
+            }
 
             // 名称
-            textBoxName.Text = setting.Name;
+            textBoxName.Text = isDuplicate ? setting.Name + "の複製" : setting.Name;
 
             // 説明
             textBoxDescription.Text = setting.Description;

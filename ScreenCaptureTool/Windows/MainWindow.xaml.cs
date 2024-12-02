@@ -8,7 +8,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using Microsoft.VisualBasic.FileIO;
 using MessageBox = System.Windows.MessageBox;
 using ScreenCaptureTool.Models;
@@ -16,7 +15,6 @@ using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Utilities;
 using System.Windows.Input;
 using ScreenCaptureTool.Controllers.CaptureProvider;
-using System.Windows.Documents;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -75,8 +73,10 @@ namespace ScreenCaptureTool.Windows
             // DataContextにImageFilesをバインド
             DataContext = this;
 
+#if DEBUG
             // プロジェクトファイルを読み込む
             LoadProjectFile(projectSettings.FilePath);
+#endif
         }
 
         #endregion Constructor
@@ -332,6 +332,24 @@ namespace ScreenCaptureTool.Windows
             {
                 var view = System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings);
                 view.Refresh();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 撮影設定の複製
+        /// </summary>
+        /// <param name="setting">撮影設定</param>
+        /// <returns>true: 複製した / false: キャンセル</returns>
+        private bool DuplicateRecordingSetting(RecordingSetting setting)
+        {
+            RecordingSettingsWindow dialog = new RecordingSettingsWindow();
+            dialog.Owner = this;    // 現在のウィンドウを親に設定
+            dialog.LoadSettings(setting, true);
+            if (dialog.ShowDialog() == true)
+            {
+                RecordingSettings.Add(dialog.Setting);
                 return true;
             }
             return false;
@@ -741,9 +759,20 @@ namespace ScreenCaptureTool.Windows
         /// </summary>
         private void DeleteSettingMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (CurrentSetting != null)
+            if (listViewRecoringSetting.SelectedItem is RecordingSetting selectedSetting)
             {
-                DeleteRecordingSetting(CurrentSetting);
+                DeleteRecordingSetting(selectedSetting);
+            }
+        }
+
+        /// <summary>
+        /// 撮影設定一覧のコンテキストメニュー：複製
+        /// </summary>
+        private void DuplicateSettingMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (listViewRecoringSetting.SelectedItem is RecordingSetting selectedSetting)
+            {
+                DuplicateRecordingSetting(selectedSetting);
             }
         }
 
