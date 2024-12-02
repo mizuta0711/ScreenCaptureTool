@@ -35,7 +35,7 @@
         <Grid Margin="0,20,0,0">
             <Grid.RowDefinitions>
                 <!-- 上部の設定エリア -->
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="185" />
                 <!-- 下部のサムネイル表示エリア -->
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
@@ -58,10 +58,11 @@
 
                 <!-- 撮影設定一覧 -->
                 <controls:RecordingSettingListView x:Name="listViewRecoringSetting"
-                          Grid.Row="1"
-                          Grid.Column="0"
-                          ItemsSource="{Binding RecordingSettings}"
-                          MouseDoubleClick="RecordingSettingList_MouseDoubleClick">
+                                                   Grid.Row="1"
+                                                   Grid.Column="0"
+                                                   SelectionMode="Single"
+                                                   ItemsSource="{Binding RecordingSettings}"
+                                                   MouseDoubleClick="RecordingSettingList_MouseDoubleClick">
                     <ListView.ContextMenu>
                         <ContextMenu Opened="RecordingSettingListViewMenu_Opened">
                             <MenuItem Header="追加" Click="AddSettingMenuItem_Click" />
@@ -73,10 +74,10 @@
                     </ListView.ContextMenu>
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="名前" DisplayMemberBinding="{Binding Name}" Width="150" />
-                            <GridViewColumn Header="撮影情報" DisplayMemberBinding="{Binding Information}" Width="300" />
-                            <GridViewColumn Header="保存方法" DisplayMemberBinding="{Binding SaveType}" Width="100" />
-                            <GridViewColumn Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
+                            <GridViewColumn x:Name="recordingListColumnName" Header="名前" DisplayMemberBinding="{Binding Name}" Width="150" />
+                            <GridViewColumn x:Name="recordingListColumnInformation" Header="撮影情報" DisplayMemberBinding="{Binding Information}" Width="200" />
+                            <GridViewColumn x:Name="recordingListColumnSaveInformation" Header="保存先" DisplayMemberBinding="{Binding SaveInformation}" Width="200" />
+                            <GridViewColumn x:Name="recordingListColumnDescription" Header="説明" DisplayMemberBinding="{Binding Description}" Width="200" />
                         </GridView>
                     </ListView.View>
                 </controls:RecordingSettingListView>
@@ -107,7 +108,7 @@
                             Width="145"
                             Height="145"
                             Click="CaptureButton_Click"
-                            Margin="0,5,0,0" />
+                            Margin="0,0,0,5" />
                 </StackPanel>
             </Grid>
 
@@ -115,24 +116,24 @@
             <Grid Grid.Row="1">
                 <!-- 左右のペインを分割 -->
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition x:Name="columnDefinitionTreeViewPane" Width="300" />
                     <ColumnDefinition Width="5" />
                     <!-- GridSplitter のスペース -->
-                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <!-- 左側のフォルダツリー表示 -->
                 <controls:FolderTreeView x:Name="FolderTreeView"
-                        Grid.Column="0"
-                        SelectedItemChanged="FolderTreeView_SelectedItemChanged" />
+                                        Grid.Column="0"
+                                        SelectedItemChanged="FolderTreeView_SelectedItemChanged" />
 
                 <!-- GridSplitter：左右のペインの幅をドラッグで変更可能にする -->
                 <GridSplitter Grid.Column="1"
-                        Width="5"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch"
-                        Background="Gray"
-                        ShowsPreview="True" />
+                                Width="5"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="Gray"
+                                ShowsPreview="True" />
 
                 <!-- 右側のサムネイル表示エリア -->
                 <ScrollViewer Grid.Column="2"

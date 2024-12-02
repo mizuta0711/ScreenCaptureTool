@@ -37,6 +37,29 @@ namespace ScreenCaptureTool.Models
         /// </summary>
         public double WindowHeight { get; set; }
 
+        public struct RecordingSettingListWidth
+        {
+            public double Name { get; set; }
+            public double Information { get; set; }
+            public double SaveInformation { get; set; }
+            public double Description { get; set; }
+
+            public RecordingSettingListWidth(double name, double information, double saveInformation, double description)
+            {
+                Name = name;
+                Information = information;
+                SaveInformation = saveInformation;
+                Description = description;
+            }
+        }
+
+        public RecordingSettingListWidth SettingListWidth { get; set; }
+
+        /// <summary>
+        /// TreeViewの幅
+        /// </summary>
+        public double FolderTreeViewWidth { get; set; }
+
         /// <summary>
         /// サムネイル画像サイズ
         /// </summary>
@@ -65,6 +88,9 @@ namespace ScreenCaptureTool.Models
             WindowTop = 0;
             WindowWidth = 0;
             WindowHeight = 0;
+
+            FolderTreeViewWidth = 300;
+            SettingListWidth = new RecordingSettingListWidth(150, 200, 200, 200);
 
             ThumbnailSize = 100;
             SaveFolderPath = Environment.CurrentDirectory;

@@ -270,6 +270,23 @@ namespace ScreenCaptureTool.Models
         }
 
         /// <summary>
+        /// 保存先情報を取得
+        /// </summary>
+        [XmlIgnore]
+        public string SaveInformation
+        {
+            get
+            {
+                if (SaveType == ImageSaveType.Clipboard)
+                {
+                    return $"クリップボードに保存";
+                }
+                // ファイルに保存
+                return FilenameFormat + FileExtension;
+            }
+        }
+
+        /// <summary>
         /// 画像保存形式に対応するファイル拡張子を取得
         /// </summary>
         [XmlIgnore]

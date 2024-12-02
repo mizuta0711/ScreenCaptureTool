@@ -15,6 +15,7 @@ using ScreenCaptureTool.Models.CaptureItem;
 using ScreenCaptureTool.Utilities;
 using System.Windows.Input;
 using ScreenCaptureTool.Controllers.CaptureProvider;
+using ScreenCaptureTool.Windows.Controls;
 
 namespace ScreenCaptureTool.Windows
 {
@@ -199,6 +200,15 @@ namespace ScreenCaptureTool.Windows
                 Height = setting.WindowHeight;
             }
 
+            // 撮影設定一覧の列幅を設定
+            recordingListColumnName.Width = setting.SettingListWidth.Name;
+            recordingListColumnInformation.Width = setting.SettingListWidth.Information;
+            recordingListColumnSaveInformation.Width = setting.SettingListWidth.SaveInformation;
+            recordingListColumnDescription.Width = setting.SettingListWidth.Description;
+
+            // TreeViewの幅を設定
+            columnDefinitionTreeViewPane.Width = new GridLength(Math.Max(10, setting.FolderTreeViewWidth));
+
             // 保存先フォルダ
             saveFolderPath = setting.SaveFolderPath;
 
@@ -228,10 +238,25 @@ namespace ScreenCaptureTool.Windows
             setting.WindowLeft = Left;
             setting.WindowWidth = Width;
             setting.WindowHeight = Height;
+
+            // 撮影設定一覧の列幅
+            setting.SettingListWidth = new ProjectSetting.RecordingSettingListWidth
+            {
+                Name = recordingListColumnName.Width,
+                Information = recordingListColumnInformation.Width,
+                SaveInformation = recordingListColumnSaveInformation.Width,
+                Description = recordingListColumnDescription.Width
+            };
+
+            // TreeViewの幅
+            setting.FolderTreeViewWidth = columnDefinitionTreeViewPane.Width.Value;
+
             // サムネイルサイズ
             setting.ThumbnailSize = thumbnailSize;
+
             // 保存先フォルダ
             setting.SaveFolderPath = saveFolderPath;
+
             // 撮影設定
             setting.RecordingSettings = RecordingSettings;
         }
@@ -330,8 +355,8 @@ namespace ScreenCaptureTool.Windows
             dialog.LoadSettings(setting);
             if (dialog.ShowDialog() == true)
             {
-                var view = System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings);
-                view.Refresh();
+                // 撮影設定一覧を更新
+                System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings).Refresh();
                 return true;
             }
             return false;
@@ -893,6 +918,9 @@ namespace ScreenCaptureTool.Windows
                         CurrentSetting.IncrimentFilenameFormatNumber();
                         // 撮影設定を保存
                         SaveProjectFile(projectSettings);
+
+                        // 撮影設定一覧を更新
+                        System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings).Refresh();
                     }
                 }
             }
