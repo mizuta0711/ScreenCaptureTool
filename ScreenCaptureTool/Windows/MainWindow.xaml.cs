@@ -366,6 +366,9 @@ namespace ScreenCaptureTool.Windows
             if (dialog.ShowDialog() == true)
             {
                 RecordingSettings.Add(dialog.Setting);
+
+                // ステータスバーにメッセージを設定
+                UpdateStatusBarMessage($"設定「{dialog.Setting.Name}」を追加しました");
             }
         }
 
@@ -383,6 +386,10 @@ namespace ScreenCaptureTool.Windows
             {
                 // 撮影設定一覧を更新
                 System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings).Refresh();
+
+                // ステータスバーにメッセージを設定
+                UpdateStatusBarMessage($"設定「{dialog.Setting.Name}」を編集しました");
+
                 return true;
             }
             return false;
@@ -400,7 +407,12 @@ namespace ScreenCaptureTool.Windows
             dialog.LoadSettings(setting, true);
             if (dialog.ShowDialog() == true)
             {
+                // 複製した設定を追加
                 RecordingSettings.Add(dialog.Setting);
+
+                // ステータスバーにメッセージを設定
+                UpdateStatusBarMessage($"設定「{dialog.Setting.Name}」を追加しました");
+
                 return true;
             }
             return false;
@@ -417,6 +429,10 @@ namespace ScreenCaptureTool.Windows
             if (MessageBox.Show($"設定「{setting.Name}」を削除しますか？", "削除確認", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 RecordingSettings.Remove(setting);
+
+                // ステータスバーにメッセージを設定
+                UpdateStatusBarMessage($"設定「{setting.Name}」を削除しました");
+
                 return true;
             }
             return false;
@@ -501,6 +517,7 @@ namespace ScreenCaptureTool.Windows
                 // クリップボードにコピー
                 BitmapHelper.CopyToClipboard(bitmap);
 
+                // ステータスバーにメッセージを設定
                 UpdateStatusBarMessage($"[{CurrentSetting.Name}] クリップボードに保存しました");
                 return true;
             }
@@ -539,6 +556,7 @@ namespace ScreenCaptureTool.Windows
                 // サムネイルリストを更新
                 AddImageToList(saveFileFullPath);
 
+                // ステータスバーにメッセージを設定
                 UpdateStatusBarMessage($"[{CurrentSetting.Name}] {Path.GetFileName(saveFileFullPath)} を保存しました");
 
                 return true;
@@ -952,7 +970,8 @@ namespace ScreenCaptureTool.Windows
                         // 撮影設定一覧を更新
                         System.Windows.Data.CollectionViewSource.GetDefaultView(RecordingSettings).Refresh();
                     }
-                } else
+                }
+                else
                 {
                     // キャプチャ画像が取得できなかった場合
                     ShowErrorDialog("画像の取得に失敗しました");
